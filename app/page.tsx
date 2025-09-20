@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye } from 'lucide-react'
+import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye, MessageCircle } from 'lucide-react'
 import PDFDisplay from '@/components/PDFDisplay'
 import SummaryPanel from '@/components/SummaryPanel'
 import LandingPage from '@/components/LandingPage'
 import ThemeToggle from '@/components/ThemeToggle'
+import ChatBot from '@/components/ChatBot'
 import { extractTextFromPDF } from '@/lib/pdfProcessor'
 import { detectKeywords } from '@/lib/keywordDetector'
 
@@ -16,8 +17,9 @@ export default function Home() {
   const [keywords, setKeywords] = useState<Array<{word: string, definition: string, context: string}>>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string>('')
-  const [activeTab, setActiveTab] = useState<'viewer' | 'summary'>('viewer')
+  const [activeTab, setActiveTab] = useState<'viewer' | 'summary' | 'chat'>('viewer')
   const [showLandingPage, setShowLandingPage] = useState(true)
+  const [showChatBot, setShowChatBot] = useState(false)
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -176,6 +178,17 @@ export default function Home() {
                       <BookOpen className="h-4 w-4 mr-1" />
                       Summary
                     </button>
+                    <button
+                      onClick={() => setActiveTab('chat')}
+                      className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
+                        activeTab === 'chat'
+                          ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      Chat
+                    </button>
                   </div>
                 </div>
                 
@@ -185,7 +198,7 @@ export default function Home() {
                     extractedText={extractedText}
                     keywords={keywords}
                   />
-                ) : (
+                ) : activeTab === 'summary' ? (
                   <>
                     {console.log('SummaryPanel props:', {
                       textLength: extractedText.length,
@@ -198,12 +211,41 @@ export default function Home() {
                       fileName={pdfFile.name}
                     />
                   </>
+                ) : (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
+                    <div className="text-center py-12">
+                      <MessageCircle className="mx-auto h-16 w-16 text-primary-500 mb-4" />
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                        AI PDF Assistant
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
+                        Ask questions about your PDF content and get intelligent answers based on the document's context.
+                      </p>
+                      <button
+                        onClick={() => setShowChatBot(true)}
+                        className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                      >
+                        Start Chatting
+                      </button>
+                    </div>
+                  </div>
                 )}
               </>
             )}
           </div>
         )}
       </div>
+
+      {/* ChatBot Component */}
+      {pdfFile && extractedText && (
+        <ChatBot
+          pdfContext={extractedText}
+          keywords={keywords}
+          fileName={pdfFile.name}
+          isVisible={showChatBot}
+          onToggle={() => setShowChatBot(!showChatBot)}
+        />
+      )}
     </main>
   )
 }
