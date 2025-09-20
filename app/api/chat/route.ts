@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import OpenAI from 'openai'
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,7 +12,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('Request body received:', { message: body.message, hasContext: !!body.pdfContext })
     
-    const { message, pdfContext } = body
+    const { message, pdfContext, keywords, fileName } = body
     
     if (!message || !pdfContext) {
       console.log('Missing required fields:', { message: !!message, pdfContext: !!pdfContext })
@@ -18,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Generating AI response...')
-    const response = await generateAIResponse(message, pdfContext)
+    const response = await generateAIResponse(message, pdfContext, keywords, fileName)
     console.log('Generated response length:', response.length)
 
     return NextResponse.json({ 
@@ -40,11 +45,70 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function generateAIResponse(message: string, pdfContext: string): Promise<string> {
+async function generateAIResponse(message: string, pdfContext: string, keywords?: Array<{word: string, definition: string, context: string}>, fileName?: string): Promise<string> {
   try {
     console.log('generateAIResponse called with message:', message)
     console.log('PDF context length:', pdfContext.length)
     
+    // Try OpenAI first for intelligent responses
+    try {
+      const systemPrompt = `You are an AI assistant that helps users understand PDF documents. You have access to the full text content of a PDF document and should provide accurate, helpful responses based on that content.
+
+Document Information:
+- File Name: ${fileName || 'Unknown'}
+- Key Terms Identified: ${keywords ? keywords.length : 0} terms
+${keywords ? `- Important Keywords: ${keywords.slice(0, 10).map(k => k.word).join(', ')}` : ''}
+
+Guidelines:
+1. Always base your responses on the actual PDF content provided
+2. Be specific and cite relevant information from the document when possible
+3. If the user asks about something not in the PDF, politely explain that you can only answer questions about the document content
+4. Provide clear, well-structured answers
+5. If asked for a summary, focus on the main points and key findings
+6. When explaining concepts, use examples from the document when available
+7. Keep responses concise but comprehensive
+8. Reference the identified keywords when relevant to provide better context
+9. If asked about specific terms, use the keyword definitions and context when available
+
+The PDF content is provided in the user's message.`
+
+      const userPrompt = `PDF Content:
+${pdfContext.substring(0, 8000)} // Limit context to avoid token limits
+
+${keywords && keywords.length > 0 ? `Key Terms and Definitions:
+${keywords.slice(0, 15).map(k => `- ${k.word}: ${k.definition} (Context: ${k.context.substring(0, 100)}...)`).join('\n')}
+
+` : ''}User Question: ${message}
+
+Please provide a helpful response based on the PDF content above. If the question cannot be answered from the document content, please explain that you can only answer questions about the PDF content.`
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: userPrompt
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7,
+      })
+
+      const response = completion.choices[0]?.message?.content || ''
+      
+      if (response.trim()) {
+        return response.trim()
+      }
+    } catch (apiError: any) {
+      console.error('OpenAI API Error:', apiError)
+      // Fall back to pattern-based responses
+    }
+
+    // Fallback to pattern-based responses if OpenAI fails
     const lowerMessage = message.toLowerCase()
     
     // Extract key topics from the PDF context
@@ -56,20 +120,20 @@ async function generateAIResponse(message: string, pdfContext: string): Promise<
     
     console.log('Important words extracted:', importantWords.length)
 
-  // Generate contextual responses based on the message
-  if (lowerMessage.includes('summary') || lowerMessage.includes('summarize')) {
-    return `Based on the PDF content, here's a summary of the key points:
+    // Generate contextual responses based on the message
+    if (lowerMessage.includes('summary') || lowerMessage.includes('summarize')) {
+      return `Based on the PDF content, here's a summary of the key points:
 
 ${importantWords.slice(0, 10).join(', ')}
 
 The document appears to cover topics related to ${importantWords.slice(0, 5).join(', ')}. The main content discusses various aspects of these subjects with detailed explanations and analysis.
 
 Would you like me to elaborate on any specific aspect of the document?`
-  }
+    }
 
-  if (lowerMessage.includes('what') && lowerMessage.includes('about')) {
-    const topic = message.match(/what.*about\s+(.+)/i)?.[1] || 'the main topics'
-    return `Regarding ${topic} in the PDF:
+    if (lowerMessage.includes('what') && lowerMessage.includes('about')) {
+      const topic = message.match(/what.*about\s+(.+)/i)?.[1] || 'the main topics'
+      return `Regarding ${topic} in the PDF:
 
 The document contains information about ${importantWords.slice(0, 8).join(', ')}. Based on the content, ${topic} is discussed in the context of the broader subject matter.
 
@@ -79,10 +143,10 @@ Key points related to ${topic} include:
 - ${importantWords[2] || 'significant aspects'}
 
 Is there a specific aspect of ${topic} you'd like me to explain further?`
-  }
+    }
 
-  if (lowerMessage.includes('explain') || lowerMessage.includes('how')) {
-    return `Let me explain based on the PDF content:
+    if (lowerMessage.includes('explain') || lowerMessage.includes('how')) {
+      return `Let me explain based on the PDF content:
 
 The document provides detailed information about ${importantWords.slice(0, 6).join(', ')}. Here's how it works:
 
@@ -91,10 +155,10 @@ The document provides detailed information about ${importantWords.slice(0, 6).jo
 3. **Application**: The content shows how these concepts apply to ${importantWords[3] || 'practical situations'}
 
 The document appears to be comprehensive in covering these topics. Would you like me to focus on a specific part of the explanation?`
-  }
+    }
 
-  if (lowerMessage.includes('key') || lowerMessage.includes('important') || lowerMessage.includes('main')) {
-    return `Based on the PDF content, here are the key points:
+    if (lowerMessage.includes('key') || lowerMessage.includes('important') || lowerMessage.includes('main')) {
+      return `Based on the PDF content, here are the key points:
 
 **Main Topics:**
 - ${importantWords[0] || 'Primary subject matter'}
@@ -110,7 +174,7 @@ The document appears to be comprehensive in covering these topics. Would you lik
 The document provides comprehensive coverage of these topics with detailed explanations and analysis. The content appears to be well-structured and informative.
 
 Is there a specific topic you'd like me to elaborate on?`
-  }
+    }
 
     // Default response for general questions
     if (importantWords.length === 0) {
