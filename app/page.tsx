@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye } from 'lucide-react'
 import PDFDisplay from '@/components/PDFDisplay'
 import SummaryPanel from '@/components/SummaryPanel'
+import LandingPage from '@/components/LandingPage'
 import { extractTextFromPDF } from '@/lib/pdfProcessor'
 import { detectKeywords } from '@/lib/keywordDetector'
 
@@ -15,6 +16,7 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string>('')
   const [activeTab, setActiveTab] = useState<'viewer' | 'summary'>('viewer')
+  const [showLandingPage, setShowLandingPage] = useState(true)
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -22,6 +24,7 @@ export default function Home() {
       setPdfFile(file)
       setError('')
       setIsProcessing(true)
+      setShowLandingPage(false) // Hide landing page when file is uploaded
       
       try {
         // Extract text from PDF
@@ -68,10 +71,32 @@ export default function Home() {
     multiple: false
   })
 
+  // Show landing page if no file is uploaded
+  if (showLandingPage) {
+    return <LandingPage onGetStarted={() => setShowLandingPage(false)} />
+  }
+
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="max-w-6xl mx-auto">
         <header className="text-center mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => setShowLandingPage(true)}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              ← Back to Home
+            </button>
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                PDF Analyzer
+              </span>
+            </div>
+            <div></div>
+          </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             PDF Keyword Analyzer
           </h1>
