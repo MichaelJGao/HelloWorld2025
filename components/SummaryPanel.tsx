@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { FileText, Clock, Users, Target, Lightbulb, BookOpen, Download, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react'
+import { FileText, Clock, Users, Target, Lightbulb, BookOpen, Download, RefreshCw, AlertCircle, CheckCircle, Brain } from 'lucide-react'
+import SentimentAnalysis from './SentimentAnalysis'
 
 interface SummaryData {
   mainTopic: string
@@ -28,6 +29,7 @@ export default function SummaryPanel({ extractedText, keywords, fileName }: Summ
   const [error, setError] = useState<string>('')
   const [isExpanded, setIsExpanded] = useState(false)
   const [source, setSource] = useState<string>('')
+  const [activeSubTab, setActiveSubTab] = useState<'summary' | 'sentiment'>('summary')
 
   const generateSummary = async (forceRegenerate = false) => {
     setIsGenerating(true)
@@ -161,14 +163,41 @@ DOCUMENT INFORMATION:
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <FileText className="h-5 w-5 text-primary-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Document Summary</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Document Analysis</h2>
             {source && (
               <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                 {source}
               </span>
             )}
           </div>
+          
           <div className="flex items-center space-x-2">
+            {/* Sub-tab Navigation */}
+            <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setActiveSubTab('summary')}
+                className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  activeSubTab === 'summary'
+                    ? 'bg-white text-primary-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                Summary
+              </button>
+              <button
+                onClick={() => setActiveSubTab('sentiment')}
+                className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  activeSubTab === 'sentiment'
+                    ? 'bg-white text-primary-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Brain className="h-4 w-4 mr-1" />
+                Sentiment
+              </button>
+            </div>
+            
             {summaryData && (
               <div className="flex items-center space-x-1">
                 <button
@@ -343,6 +372,8 @@ DOCUMENT INFORMATION:
           </div>
         ) : (
           <div className="space-y-6">
+            {activeSubTab === 'summary' ? (
+              <>
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center p-3 bg-blue-50 rounded-lg">
@@ -451,6 +482,13 @@ DOCUMENT INFORMATION:
                 </p>
               )}
             </div>
+              </>
+            ) : (
+              <SentimentAnalysis 
+                extractedText={extractedText}
+                fileName={fileName}
+              />
+            )}
           </div>
         )}
       </div>
