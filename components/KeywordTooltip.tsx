@@ -73,7 +73,32 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
           setIsFallback(true)
         }
       } else {
-        setImageUrl('')
+        // Even if we have a definition from context, still try to get an image
+        try {
+          const imageResponse = await fetch('/api/search-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              term, 
+              context: keyword?.context || '' 
+            }),
+          })
+          
+          if (imageResponse.ok) {
+            const imageData = await imageResponse.json()
+            setImageUrl(imageData.imageUrl || '')
+            setImageAlt(imageData.imageAlt || '')
+            setSource(imageData.source || '')
+            setWikipediaUrl(imageData.wikipediaUrl || '')
+            setDescription(imageData.description || '')
+            setImageMessage(imageData.message || '')
+          }
+        } catch (imageError) {
+          console.error('Error fetching image for context definition:', imageError)
+          // Continue without image
+        }
       }
       
       setSummary(definition)
