@@ -13,6 +13,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 })
     }
 
+    // Clean the text to remove non-content sections
+    const cleanedText = cleanTextForKeywordDetection(text)
+    
     // Try OpenAI first for intelligent keyword detection
     try {
              const prompt = `Find keywords from this article that are important to the main idea/purpose of the article or acronyms and hard terms. Focus on:
@@ -23,9 +26,18 @@ export async function POST(request: NextRequest) {
 4. Complex terms that are key to the article's argument or findings
 5. Domain-specific concepts that readers might not understand
 
-Exclude common words, basic vocabulary, and references/bibliography sections. Only include terms that are truly important for understanding the article's main points.
+IMPORTANT: Exclude the following sections completely:
+- References, bibliography, works cited, sources
+- Creative Commons, copyright, licensing information
+- Author affiliations, acknowledgments, funding information
+- Abstract, keywords, metadata sections
+- Table of contents, page numbers, headers/footers
+- Any legal disclaimers or boilerplate text
+- Common words, basic vocabulary, and stop words
 
-Text: "${text.substring(0, 3000)}"
+Only include terms from the main content that are truly important for understanding the article's main points and research findings.
+
+Text: "${cleanedText.substring(0, 3000)}"
 
 Return a JSON array of objects with this structure:
 [
@@ -87,8 +99,8 @@ Limit to 12-15 most important terms that are essential to the article's main pur
   }
 }
 
-function fallbackKeywordDetection(text: string) {
-  const keywords = []
+function fallbackKeywordDetection(text: string): Array<{ word: string; definition: string; context: string }> {
+  const keywords: Array<{ word: string; definition: string; context: string }> = []
   const foundTerms = new Set<string>()
   
   // Remove references/bibliography sections
@@ -141,4 +153,42 @@ function extractContext(text: string, term: string, contextLength: number = 100)
   const end = Math.min(text.length, index + term.length + contextLength)
   
   return text.substring(start, end).trim()
+}
+
+function cleanTextForKeywordDetection(text: string): string {
+  let cleanedText = text
+  
+  // Remove references/bibliography sections
+  cleanedText = cleanedText.replace(/(references?|bibliography|works cited|sources?)\s*:?.*$/gim, '')
+  
+  // Remove Creative Commons and copyright information
+  cleanedText = cleanedText.replace(/creative commons.*?$/gim, '')
+  cleanedText = cleanedText.replace(/copyright.*?$/gim, '')
+  cleanedText = cleanedText.replace(/©.*?$/gim, '')
+  cleanedText = cleanedText.replace(/all rights reserved.*?$/gim, '')
+  
+  // Remove author affiliations and acknowledgments
+  cleanedText = cleanedText.replace(/acknowledgments?.*?$/gim, '')
+  cleanedText = cleanedText.replace(/funding.*?$/gim, '')
+  cleanedText = cleanedText.replace(/author affiliations?.*?$/gim, '')
+  
+  // Remove abstract and metadata sections
+  cleanedText = cleanedText.replace(/abstract\s*:?.*?(?=\n\n|\n[A-Z]|$)/gim, '')
+  cleanedText = cleanedText.replace(/keywords?\s*:?.*?(?=\n\n|\n[A-Z]|$)/gim, '')
+  
+  // Remove page numbers and headers/footers
+  cleanedText = cleanedText.replace(/^\s*\d+\s*$/gm, '') // Standalone page numbers
+  cleanedText = cleanedText.replace(/^page \d+.*$/gim, '') // "Page X" headers
+  
+  // Remove legal disclaimers and boilerplate
+  cleanedText = cleanedText.replace(/disclaimer.*?$/gim, '')
+  cleanedText = cleanedText.replace(/terms of use.*?$/gim, '')
+  cleanedText = cleanedText.replace(/privacy policy.*?$/gim, '')
+  
+  // Remove excessive whitespace and normalize
+  cleanedText = cleanedText.replace(/\n\s*\n\s*\n/g, '\n\n') // Multiple newlines to double
+  cleanedText = cleanedText.replace(/^\s+|\s+$/gm, '') // Trim each line
+  cleanedText = cleanedText.trim()
+  
+  return cleanedText
 }

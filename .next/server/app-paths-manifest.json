@@ -1,6 +1,4 @@
 {
   "/page": "app/page.js",
-  "/api/detect-keywords/route": "app/api/detect-keywords/route.js",
-  "/api/generate-summary/route": "app/api/generate-summary/route.js",
-  "/api/search-image/route": "app/api/search-image/route.js"
+  "/api/detect-keywords/route": "app/api/detect-keywords/route.js"
 }
