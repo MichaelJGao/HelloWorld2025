@@ -30,7 +30,10 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
   const [showPdfView, setShowPdfView] = useState(true)
   const [pdfPages, setPdfPages] = useState<string[]>([])
   const [currentZoomedPage, setCurrentZoomedPage] = useState<string | null>(null)
+  const [selectedTextFromPdf, setSelectedTextFromPdf] = useState<string | null>(null)
+  const [highlightedTextId, setHighlightedTextId] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const textViewRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setFilteredText(extractedText)
@@ -193,6 +196,160 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
     }
   }
 
+  const handlePdfTextSelection = () => {
+    const selection = window.getSelection()
+    if (selection && selection.toString().length > 0) {
+      const text = selection.toString().trim()
+      console.log('PDF text selected:', text)
+      setSelectedTextFromPdf(text)
+      
+      // Find and highlight this text in the Text View
+      findAndHighlightTextInTextView(text)
+      
+      // Also show tooltip for the selected text
+      const enhancedContext = getEnhancedContext(text, extractedText, 150)
+      setSelectedText(text)
+      setHoveredKeyword(null)
+      const range = selection.getRangeAt(0)
+      const rect = range.getBoundingClientRect()
+      setTooltipPosition({
+        x: rect.left + window.scrollX + rect.width / 2,
+        y: rect.top + window.scrollY - 10,
+      })
+      setShowTooltip(true)
+    } else {
+      console.log('No text selected or selection is empty')
+    }
+  }
+
+  const findAndHighlightTextInTextView = (searchText: string) => {
+    if (!textViewRef.current || !searchText) {
+      console.log('No textViewRef or searchText:', { textViewRef: !!textViewRef.current, searchText })
+      return
+    }
+
+    console.log('Searching for text:', searchText)
+
+    // Clear previous highlights
+    const previousHighlights = textViewRef.current.querySelectorAll('.pdf-selection-highlight')
+    previousHighlights.forEach(highlight => {
+      const parent = highlight.parentNode
+      if (parent) {
+        parent.replaceChild(document.createTextNode(highlight.textContent || ''), highlight)
+        parent.normalize()
+      }
+    })
+
+    // Find the text in the Text View - use a more flexible approach
+    const textContent = textViewRef.current.textContent || ''
+    console.log('Text view content length:', textContent.length)
+    console.log('First 200 chars of text view:', textContent.substring(0, 200))
+    
+    // Try different search approaches
+    let searchIndex = -1
+    let actualSearchText = searchText
+    
+    // First try exact match
+    searchIndex = textContent.toLowerCase().indexOf(searchText.toLowerCase())
+    
+    // If not found, try with cleaned text (remove extra spaces, newlines)
+    if (searchIndex === -1) {
+      const cleanedSearchText = searchText.replace(/\s+/g, ' ').trim()
+      const cleanedTextContent = textContent.replace(/\s+/g, ' ').trim()
+      searchIndex = cleanedTextContent.toLowerCase().indexOf(cleanedSearchText.toLowerCase())
+      actualSearchText = cleanedSearchText
+      console.log('Trying cleaned search:', { cleanedSearchText, found: searchIndex !== -1 })
+    }
+    
+    // If still not found, try partial matches
+    if (searchIndex === -1) {
+      const words = searchText.split(/\s+/).filter(word => word.length > 2)
+      for (const word of words) {
+        searchIndex = textContent.toLowerCase().indexOf(word.toLowerCase())
+        if (searchIndex !== -1) {
+          actualSearchText = word
+          console.log('Found partial match with word:', word)
+          break
+        }
+      }
+    }
+    
+    console.log('Final search result:', { searchIndex, actualSearchText })
+    
+    if (searchIndex !== -1) {
+      // Create a unique ID for this highlight
+      const highlightId = `highlight-${Date.now()}`
+      setHighlightedTextId(highlightId)
+      
+      // Scroll to the text view first
+      textViewRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      })
+      
+      // Use a simpler approach - just highlight the first occurrence
+      const textNodes = []
+      const walker = document.createTreeWalker(
+        textViewRef.current,
+        NodeFilter.SHOW_TEXT,
+        null
+      )
+      
+      let node
+      while (node = walker.nextNode()) {
+        textNodes.push(node)
+      }
+      
+      // Find the node containing our text
+      let currentPos = 0
+      for (const textNode of textNodes) {
+        const nodeText = textNode.textContent || ''
+        const nodeLength = nodeText.length
+        
+        if (currentPos <= searchIndex && searchIndex < currentPos + nodeLength) {
+          const relativeIndex = searchIndex - currentPos
+          const beforeText = nodeText.substring(0, relativeIndex)
+          const matchText = nodeText.substring(relativeIndex, relativeIndex + actualSearchText.length)
+          const afterText = nodeText.substring(relativeIndex + actualSearchText.length)
+          
+          // Create highlight span
+          const span = document.createElement('span')
+          span.className = 'pdf-selection-highlight bg-yellow-200 border-b-2 border-yellow-400 px-1'
+          span.id = highlightId
+          span.textContent = matchText
+          
+          // Replace the text node
+          const parent = textNode.parentNode
+          if (parent) {
+            const fragment = document.createDocumentFragment()
+            if (beforeText) fragment.appendChild(document.createTextNode(beforeText))
+            fragment.appendChild(span)
+            if (afterText) fragment.appendChild(document.createTextNode(afterText))
+            parent.replaceChild(fragment, textNode)
+          }
+          
+          // Scroll to the highlighted element
+          setTimeout(() => {
+            const highlightElement = document.getElementById(highlightId)
+            if (highlightElement) {
+              highlightElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+              })
+            }
+          }, 200)
+          
+          console.log('Successfully highlighted text:', matchText)
+          break
+        }
+        
+        currentPos += nodeLength
+      }
+    } else {
+      console.log('Text not found in Text View')
+    }
+  }
+
   const handleKeywordHover = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement
     if (target.classList.contains('keyword')) {
@@ -302,6 +459,38 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
           </div>
         </div>
 
+        {/* Helpful message */}
+        <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700">
+            💡 <strong>Tip:</strong> Select text on the PDF to automatically jump to it in the Text View. Use Text View for keyword definitions and search.
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={() => {
+                const testText = "research"
+                console.log('Testing with text:', testText)
+                findAndHighlightTextInTextView(testText)
+              }}
+              className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+            >
+              Test: Find "research"
+            </button>
+            <button
+              onClick={() => {
+                console.log('Current extracted text length:', extractedText.length)
+                console.log('First 500 chars:', extractedText.substring(0, 500))
+                console.log('Text view ref exists:', !!textViewRef.current)
+                if (textViewRef.current) {
+                  console.log('Text view content length:', textViewRef.current.textContent?.length)
+                }
+              }}
+              className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+            >
+              Debug Info
+            </button>
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="text-center py-12 text-gray-500">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -316,32 +505,34 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
                 className="w-full h-auto"
                 style={{ display: 'block' }}
               />
-              {/* Text overlay with keyword highlighting */}
+              {/* Simple text overlay for selection only - no keyword highlighting */}
               <div
                 className="absolute inset-0 pointer-events-auto cursor-text"
                 style={{ 
                   userSelect: 'text',
-                  fontSize: `${12 * zoom}px`,
-                  lineHeight: '1.3',
+                  color: 'transparent',
+                  fontSize: '11px',
+                  lineHeight: '1.2',
                   fontFamily: 'serif',
-                  padding: `${16 * zoom}px`,
-                  color: 'transparent'
+                  padding: '20px',
+                  wordSpacing: '0.1em',
+                  letterSpacing: '0.02em'
                 }}
-                onMouseUp={handleTextSelection}
-                onMouseOver={handleKeywordHover}
-                onMouseLeave={handleMouseLeave}
+                onMouseUp={handlePdfTextSelection}
               >
                 <div
                   className="h-full overflow-hidden"
                   style={{
-                    fontSize: `${12 * zoom}px`,
-                    lineHeight: '1.3',
-                    fontFamily: 'serif'
+                    fontSize: '11px',
+                    lineHeight: '1.2',
+                    fontFamily: 'serif',
+                    wordSpacing: '0.1em',
+                    letterSpacing: '0.02em',
+                    whiteSpace: 'pre-wrap'
                   }}
-                  dangerouslySetInnerHTML={{
-                    __html: highlightKeywords((extractedText.split('\n\n')[currentPage - 1] || extractedText).replace(/\n/g, '<br>'))
-                  }}
-                />
+                >
+                  {(extractedText.split('\n\n')[currentPage - 1] || extractedText).replace(/\n/g, '\n')}
+                </div>
               </div>
             </div>
           </div>
@@ -363,17 +554,24 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
         )}
       </div>
 
-      {/* Text Viewer Section */}
-      <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
+            {/* Text Viewer Section */}
+            <div ref={textViewRef} className="lg:w-1/2 bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold text-gray-800">Text View</h3>
-          <button
-            onClick={() => setShowTextView(!showTextView)}
-            className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-            title={showTextView ? 'Hide Text View' : 'Show Text View'}
-          >
-            {showTextView ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-          </button>
+          <div className="flex items-center gap-2">
+            {selectedTextFromPdf && (
+              <div className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                📍 Selected from PDF
+              </div>
+            )}
+            <button
+              onClick={() => setShowTextView(!showTextView)}
+              className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              title={showTextView ? 'Hide Text View' : 'Show Text View'}
+            >
+              {showTextView ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
 
         {showTextView ? (
