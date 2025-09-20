@@ -1,3 +1,7 @@
 {
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/api/generate-summary/route": "app/api/generate-summary/route.js",
+  "/api/search-image/route": "app/api/search-image/route.js",
+  "/api/generate-document-summary/route": "app/api/generate-document-summary/route.js",
+  "/api/analyze-sentiment/route": "app/api/analyze-sentiment/route.js"
 }

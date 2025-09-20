@@ -451,43 +451,64 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
   return (
     <div className="flex flex-col lg:flex-row gap-6 mt-8">
       {/* PDF Viewer Section */}
-      <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-800">Document View</h3>
+      <div className="lg:w-1/2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 overflow-y-auto max-h-[80vh] card-hover">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+              <Eye className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Document View</h3>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowPdfView(!showPdfView)}
-              className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+              className="group px-4 py-2 text-sm bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:from-blue-200 hover:to-purple-200 dark:hover:from-blue-800/40 dark:hover:to-purple-800/40 transition-all duration-300 transform hover:scale-105 font-medium"
             >
-              {showPdfView ? 'Show Text' : 'Show PDF'}
+              <span className="flex items-center">
+                {showPdfView ? (
+                  <>
+                    <BookOpen className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                    Show Text
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                    Show PDF
+                  </>
+                )}
+              </span>
             </button>
           </div>
         </div>
 
-        {/* PDF Controls */}
-        <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-2">
+        {/* Enhanced PDF Controls */}
+        <div className="flex items-center justify-between mb-6 p-4 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-700/50 dark:to-blue-900/20 rounded-xl border border-gray-200/50 dark:border-gray-600/50">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage <= 1}
-              className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group p-2.5 rounded-xl bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
             </button>
-            <span className="text-sm text-gray-600 min-w-[80px] text-center">
-              {currentPage} of {totalPages}
-            </span>
+            <div className="flex items-center px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[80px] text-center">
+                {currentPage} of {totalPages}
+              </span>
+            </div>
             <button
               onClick={() => goToPage(currentPage + 1)}
               disabled={currentPage >= totalPages}
-              className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group p-2.5 rounded-xl bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
             </button>
           </div>
           
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Use Ctrl+Scroll to zoom, Ctrl+Click to pan</span>
+            <div className="hidden sm:flex items-center px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-medium">
+              <span>Ctrl+Scroll to zoom, Ctrl+Click to pan</span>
+            </div>
           </div>
         </div>
 
@@ -501,14 +522,59 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
 
 
         {isLoading ? (
-          <div className="text-center py-12 text-gray-500">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p>Loading PDF...</p>
+          <div className="text-center py-16">
+            <div className="relative mb-8">
+              <div className="w-24 h-24 mx-auto bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl animate-pulse">
+                <div className="animate-spin rounded-full h-14 w-14 border-4 border-white border-t-transparent"></div>
+              </div>
+              <div className="absolute -top-3 -right-3 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-bounce"></div>
+              <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-gradient-to-r from-green-400 to-blue-500 rounded-full animate-ping"></div>
+            </div>
+            
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Loading PDF
+            </h3>
+            <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">Rendering document pages for optimal viewing...</p>
+            
+            {/* Loading Steps */}
+            <div className="max-w-sm mx-auto mb-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-center p-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50">
+                  <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3">
+                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Initializing PDF renderer</span>
+                </div>
+                
+                <div className="flex items-center justify-center p-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50">
+                  <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Processing document structure</span>
+                </div>
+                
+                <div className="flex items-center justify-center p-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50">
+                  <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mr-3">
+                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Rendering pages</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-center items-center space-x-2 text-primary-600 dark:text-primary-400">
+              <div className="loading-dots">
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+              <span className="text-sm font-medium ml-2">Almost ready...</span>
+            </div>
           </div>
         ) : showPdfView ? (
           <div 
             ref={pdfContainerRef}
-            className="relative border border-gray-200 shadow-sm bg-white overflow-hidden max-h-[70vh]"
+            className="relative border-2 border-gray-200 dark:border-gray-600 shadow-xl bg-white dark:bg-gray-900 overflow-hidden max-h-[70vh] rounded-xl"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -586,49 +652,59 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
         )}
       </div>
 
-            {/* Text Viewer Section */}
-            <div ref={textViewRef} className="lg:w-1/2 bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-800">Text View</h3>
-          <div className="flex items-center gap-2">
+            {/* Enhanced Text Viewer Section */}
+            <div ref={textViewRef} className="lg:w-1/2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 overflow-y-auto max-h-[80vh] card-hover">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
+              <BookOpen className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Text View</h3>
+          </div>
+          <div className="flex items-center gap-3">
             {selectedTextFromPdf && (
-              <div className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+              <div className="px-3 py-1.5 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 text-yellow-800 dark:text-yellow-300 text-xs rounded-full font-medium border border-yellow-200 dark:border-yellow-700/50">
                 📍 Selected from PDF
               </div>
             )}
             <button
               onClick={() => setShowTextView(!showTextView)}
-              className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              className="group p-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md"
               title={showTextView ? 'Hide Text View' : 'Show Text View'}
             >
-              {showTextView ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              {showTextView ? (
+                <EyeOff className="h-5 w-5 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors" />
+              ) : (
+                <Eye className="h-5 w-5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+              )}
             </button>
           </div>
         </div>
 
         {showTextView ? (
           <div>
-            <div className="relative mb-4">
+            <div className="relative mb-6">
               <input
                 type="text"
                 placeholder="Search in document..."
-                className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 pl-12 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300 shadow-sm hover:shadow-md"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
             </div>
 
-            <div className="mb-4 text-sm text-gray-600">
-              {searchTerm && (
-                <span>
-                  • Filtered by: "{searchTerm}"
-                </span>
-              )}
-            </div>
+            {searchTerm && (
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center text-sm text-blue-700 dark:text-blue-300">
+                  <Search className="h-4 w-4 mr-2" />
+                  <span className="font-medium">Filtered by: "{searchTerm}"</span>
+                </div>
+              </div>
+            )}
 
             <div
-              className="prose prose-sm max-w-none text-gray-800 leading-relaxed font-serif"
+              className="prose prose-sm max-w-none text-gray-800 dark:text-gray-200 leading-relaxed font-serif bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
               onMouseUp={handleTextSelection}
               onMouseOver={handleKeywordHover}
               onMouseLeave={handleMouseLeave}
@@ -638,9 +714,12 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
             />
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            <EyeOff className="mx-auto h-12 w-12 mb-4" />
-            <p>Text view is hidden</p>
+          <div className="text-center py-16">
+            <div className="w-20 h-20 mx-auto bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex items-center justify-center mb-6">
+              <EyeOff className="h-10 w-10 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Text view is hidden</h3>
+            <p className="text-gray-500 dark:text-gray-400">Click the eye icon to show the text view</p>
           </div>
         )}
       </div>

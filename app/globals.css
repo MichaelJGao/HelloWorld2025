@@ -64,4 +64,58 @@
   .dark .keyword:hover {
     @apply bg-blue-800;
   }
+
+  /* Custom gradient animation */
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-white/10 dark:bg-gray-800/10 backdrop-blur-md border border-white/20 dark:border-gray-700/20;
+  }
+
+  /* Enhanced button styles */
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 font-semibold py-2 px-4 rounded-lg border border-gray-200 dark:border-gray-600 transition-all duration-300 transform hover:scale-105 hover:shadow-lg;
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl;
+  }
+
+  /* Loading animation */
+  .loading-dots {
+    @apply inline-flex space-x-1;
+  }
+
+  .loading-dots > div {
+    @apply w-2 h-2 bg-current rounded-full animate-pulse;
+  }
+
+  .loading-dots > div:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .loading-dots > div:nth-child(3) {
+    animation-delay: 0.4s;
+  }
 }

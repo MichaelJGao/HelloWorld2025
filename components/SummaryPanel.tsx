@@ -158,69 +158,73 @@ DOCUMENT INFORMATION:
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+    <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 card-hover">
+      <div className="p-6 border-b border-gray-200/50 dark:border-gray-700/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <FileText className="h-5 w-5 text-primary-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Document Analysis</h2>
-            {source && (
-              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                {source}
-              </span>
-            )}
+            <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-purple-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+              <FileText className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Document Analysis</h2>
+              {source && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full font-medium">
+                  {source}
+                </span>
+              )}
+            </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            {/* Sub-tab Navigation */}
-            <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <div className="flex items-center space-x-3">
+            {/* Enhanced Sub-tab Navigation */}
+            <div className="flex items-center space-x-1 bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1.5">
               <button
                 onClick={() => setActiveSubTab('summary')}
-                className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
+                className={`flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-300 ${
                   activeSubTab === 'summary'
-                    ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-md transform scale-105'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-600/50'
                 }`}
               >
-                <FileText className="h-4 w-4 mr-1" />
+                <FileText className="h-4 w-4 mr-2" />
                 Summary
               </button>
               <button
                 onClick={() => setActiveSubTab('sentiment')}
-                className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
+                className={`flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-300 ${
                   activeSubTab === 'sentiment'
-                    ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-md transform scale-105'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-600/50'
                 }`}
               >
-                <Brain className="h-4 w-4 mr-1" />
+                <Brain className="h-4 w-4 mr-2" />
                 Sentiment
               </button>
             </div>
             
             {summaryData && (
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={() => exportSummary('text')}
-                  className="flex items-center px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                  className="group flex items-center px-3 py-1.5 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-300 transform hover:scale-105 font-medium"
                   title="Export as text"
                 >
-                  <Download className="h-3 w-3 mr-1" />
+                  <Download className="h-3 w-3 mr-1.5 group-hover:scale-110 transition-transform" />
                   TXT
                 </button>
                 <button
                   onClick={() => exportSummary('markdown')}
-                  className="flex items-center px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                  className="group flex items-center px-3 py-1.5 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-300 transform hover:scale-105 font-medium"
                   title="Export as markdown"
                 >
-                  <Download className="h-3 w-3 mr-1" />
+                  <Download className="h-3 w-3 mr-1.5 group-hover:scale-110 transition-transform" />
                   MD
                 </button>
               </div>
             )}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              className="group px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-300 transform hover:scale-105 font-medium"
             >
               {isExpanded ? 'Collapse' : 'Expand'}
             </button>
@@ -230,10 +234,18 @@ DOCUMENT INFORMATION:
 
       <div className="p-4">
         {!summaryData ? (
-          <div className="text-center py-8">
-            <BookOpen className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Generate an intelligent summary of your document
+          <div className="text-center py-12">
+            <div className="relative mb-6">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-r from-primary-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                <BookOpen className="h-10 w-10 text-white" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse"></div>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+              Generate Document Summary
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
+              Get AI-powered insights, key findings, and intelligent analysis of your document
             </p>
             <div className="space-y-2">
               <button
@@ -279,16 +291,16 @@ DOCUMENT INFORMATION:
                   }
                 }}
                 disabled={isGenerating}
-                className="flex items-center mx-auto px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="group flex items-center mx-auto px-8 py-3 bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-xl hover:from-primary-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 hover:shadow-lg font-semibold"
               >
                 {isGenerating ? (
                   <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
                     Generating...
                   </>
                 ) : (
                   <>
-                    <Lightbulb className="h-4 w-4 mr-2" />
+                    <Lightbulb className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
                     Generate Summary
                   </>
                 )}
