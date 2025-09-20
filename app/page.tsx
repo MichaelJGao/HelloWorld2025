@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, Loader2, AlertCircle } from 'lucide-react'
+import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye } from 'lucide-react'
 import PDFDisplay from '@/components/PDFDisplay'
+import SummaryPanel from '@/components/SummaryPanel'
 import { extractTextFromPDF } from '@/lib/pdfProcessor'
 import { detectKeywords } from '@/lib/keywordDetector'
 
@@ -13,6 +14,7 @@ export default function Home() {
   const [keywords, setKeywords] = useState<Array<{word: string, definition: string, context: string}>>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string>('')
+  const [activeTab, setActiveTab] = useState<'viewer' | 'summary'>('viewer')
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -120,21 +122,64 @@ export default function Home() {
               </div>
             ) : (
               <>
-                <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center">
-                  <FileText className="h-8 w-8 text-primary-500 mr-3" />
-                  <div>
-                    <h3 className="font-medium text-gray-900">{pdfFile.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {keywords.length} keywords detected
-                    </p>
+                <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FileText className="h-8 w-8 text-primary-500 mr-3" />
+                    <div>
+                      <h3 className="font-medium text-gray-900">{pdfFile.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        {keywords.length} keywords detected
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Tab Navigation */}
+                  <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setActiveTab('viewer')}
+                      className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
+                        activeTab === 'viewer'
+                          ? 'bg-white text-primary-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Viewer
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('summary')}
+                      className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
+                        activeTab === 'summary'
+                          ? 'bg-white text-primary-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <BookOpen className="h-4 w-4 mr-1" />
+                      Summary
+                    </button>
                   </div>
                 </div>
                 
-                <PDFDisplay 
-                  file={pdfFile} 
-                  extractedText={extractedText}
-                  keywords={keywords}
-                />
+                {activeTab === 'viewer' ? (
+                  <PDFDisplay 
+                    file={pdfFile} 
+                    extractedText={extractedText}
+                    keywords={keywords}
+                  />
+                ) : (
+                  <>
+                    {console.log('SummaryPanel props:', {
+                      textLength: extractedText.length,
+                      keywordsCount: keywords.length,
+                      fileName: pdfFile.name
+                    })}
+                    <SummaryPanel
+                      extractedText={extractedText}
+                      keywords={keywords}
+                      fileName={pdfFile.name}
+                    />
+                  </>
+                )}
               </>
             )}
           </div>
