@@ -25,12 +25,12 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [pdfDocument, setPdfDocument] = useState<any>(null)
-  const [textLayers, setTextLayers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [zoom, setZoom] = useState(1.0)
   const [showPdfView, setShowPdfView] = useState(true)
+  const [pdfPages, setPdfPages] = useState<string[]>([])
+  const [currentZoomedPage, setCurrentZoomedPage] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const textLayerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setFilteredText(extractedText)
@@ -51,59 +51,113 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
     }
   }, [file])
 
+  // Initialize zoomed page when PDF loads
+  useEffect(() => {
+    if (pdfDocument && currentPage && zoom === 1.0) {
+      renderPageAtZoom(currentPage, zoom).then(zoomedPage => {
+        setCurrentZoomedPage(zoomedPage)
+      })
+    }
+  }, [pdfDocument, currentPage])
+
+
   const loadPdfDocument = async (pdfFile: File) => {
     setIsLoading(true)
     try {
+      console.log('Loading PDF:', pdfFile.name, 'Size:', pdfFile.size)
       const arrayBuffer = await pdfFile.arrayBuffer()
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      
+      const pdf = await pdfjsLib.getDocument({ 
+        data: arrayBuffer,
+        cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
+        cMapPacked: true
+      }).promise
+      
+      console.log('PDF loaded successfully, pages:', pdf.numPages)
       setPdfDocument(pdf)
       setTotalPages(pdf.numPages)
-      await renderPage(1, pdf)
+      
+      // Pre-render all pages as images for simple display
+      await renderAllPages(pdf)
     } catch (error) {
       console.error('Error loading PDF:', error)
+      setPdfDocument(null)
+      setTotalPages(0)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const renderPage = async (pageNum: number, pdf?: any) => {
-    const doc = pdf || pdfDocument
-    if (!doc || !canvasRef.current) return
+  const renderAllPages = async (pdf: any) => {
+    const pages: string[] = []
+    
+    for (let i = 1; i <= pdf.numPages; i++) {
+      try {
+        const page = await pdf.getPage(i)
+        const viewport = page.getViewport({ scale: 1.5 })
+        const canvas = document.createElement('canvas')
+        const context = canvas.getContext('2d')!
+        
+        canvas.height = viewport.height
+        canvas.width = viewport.width
 
+        await page.render({
+          canvasContext: context,
+          viewport: viewport,
+        }).promise
+        
+        pages.push(canvas.toDataURL())
+        console.log(`Rendered page ${i}`)
+      } catch (error) {
+        console.error(`Error rendering page ${i}:`, error)
+      }
+    }
+    
+    setPdfPages(pages)
+  }
+
+  const renderPageAtZoom = async (pageNum: number, zoomLevel: number) => {
+    if (!pdfDocument) return null
+    
     try {
-      const page = await doc.getPage(pageNum)
-      const viewport = page.getViewport({ scale: 1.5 * zoom })
-      const canvas = canvasRef.current
+      const page = await pdfDocument.getPage(pageNum)
+      const viewport = page.getViewport({ scale: 1.5 * zoomLevel })
+      const canvas = document.createElement('canvas')
       const context = canvas.getContext('2d')!
       
       canvas.height = viewport.height
       canvas.width = viewport.width
 
-      // Render the page
       await page.render({
         canvasContext: context,
         viewport: viewport,
       }).promise
-
-      // Get text content for highlighting
-      const textContent = await page.getTextContent()
-      setTextLayers([textContent])
       
+      return canvas.toDataURL()
     } catch (error) {
-      console.error('Error rendering page:', error)
+      console.error(`Error rendering page ${pageNum} at zoom ${zoomLevel}:`, error)
+      return null
     }
   }
 
-  const goToPage = (pageNum: number) => {
+  const goToPage = async (pageNum: number) => {
     if (pageNum >= 1 && pageNum <= totalPages) {
       setCurrentPage(pageNum)
-      renderPage(pageNum)
+      // Re-render page at current zoom level
+      if (pdfDocument) {
+        const zoomedPage = await renderPageAtZoom(pageNum, zoom)
+        setCurrentZoomedPage(zoomedPage)
+      }
     }
   }
 
-  const handleZoom = (newZoom: number) => {
+  const handleZoom = async (newZoom: number) => {
     setZoom(newZoom)
-    renderPage(currentPage)
+    // Re-render current page at new zoom level
+    if (pdfDocument && currentPage) {
+      const zoomedPage = await renderPageAtZoom(currentPage, newZoom)
+      setCurrentZoomedPage(zoomedPage)
+    }
   }
 
   const highlightKeywords = useCallback((text: string) => {
@@ -253,44 +307,48 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <p>Loading PDF...</p>
           </div>
-        ) : showPdfView && pdfDocument ? (
-          <div className="relative border border-gray-200 shadow-sm bg-white overflow-auto">
-            <canvas
-              ref={canvasRef}
-              className="w-full h-auto"
-              style={{ display: 'block' }}
-            />
-            {/* Simple overlay for text selection only */}
-            <div
-              ref={textLayerRef}
-              className="absolute inset-0 pointer-events-auto cursor-text"
-              style={{ 
-                color: 'transparent',
-                userSelect: 'text',
-                fontSize: '12px',
-                lineHeight: '1.3',
-                fontFamily: 'serif',
-                padding: '16px'
-              }}
-              onMouseUp={handleTextSelection}
-            >
-              {/* Render invisible text for selection */}
+        ) : showPdfView && (currentZoomedPage || pdfPages.length > 0) ? (
+          <div className="border border-gray-200 shadow-sm bg-white overflow-auto max-h-[70vh]">
+            <div className="relative">
+              <img
+                src={currentZoomedPage || pdfPages[currentPage - 1]}
+                alt={`Page ${currentPage}`}
+                className="w-full h-auto"
+                style={{ display: 'block' }}
+              />
+              {/* Text overlay with keyword highlighting */}
               <div
-                className="h-full overflow-hidden"
-                style={{
-                  fontSize: '12px',
+                className="absolute inset-0 pointer-events-auto cursor-text"
+                style={{ 
+                  userSelect: 'text',
+                  fontSize: `${12 * zoom}px`,
                   lineHeight: '1.3',
-                  fontFamily: 'serif'
+                  fontFamily: 'serif',
+                  padding: `${16 * zoom}px`,
+                  color: 'transparent'
                 }}
+                onMouseUp={handleTextSelection}
+                onMouseOver={handleKeywordHover}
+                onMouseLeave={handleMouseLeave}
               >
-                {extractedText.split('\n\n')[currentPage - 1] || extractedText}
+                <div
+                  className="h-full overflow-hidden"
+                  style={{
+                    fontSize: `${12 * zoom}px`,
+                    lineHeight: '1.3',
+                    fontFamily: 'serif'
+                  }}
+                  dangerouslySetInnerHTML={{
+                    __html: highlightKeywords((extractedText.split('\n\n')[currentPage - 1] || extractedText).replace(/\n/g, '<br>'))
+                  }}
+                />
               </div>
             </div>
           </div>
         ) : (
           <div className="border border-gray-200 shadow-sm bg-white p-6 min-h-[600px]">
             <div className="mb-4 text-sm text-gray-600">
-              Page {currentPage} of {totalPages} • {keywords.length} keywords detected
+              {pdfDocument ? `Page ${currentPage} of ${totalPages}` : 'PDF View'} • {keywords.length} keywords detected
             </div>
             <div
               className="prose prose-sm max-w-none text-gray-800 leading-relaxed font-serif"
