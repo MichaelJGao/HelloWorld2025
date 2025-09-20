@@ -16,15 +16,14 @@ export async function POST(request: NextRequest) {
     // Try OpenAI first, but provide fallback if quota exceeded
     try {
              const prompt = searchOnline
-               ? `Provide a concise, Wikipedia-style summary for the term "${term}". Include key information, definition, and context. Keep it under 150 words.`
-               : `Based on the document context provided, give a concise definition and explanation for the term "${term}". 
+               ? `Provide a concise definition for "${term}". Aim for 2-3 sentences. Include the essential meaning and key information.`
+               : `Based on the document context, give a concise definition for "${term}". 
 
 IMPORTANT: 
-- If "${term}" is an acronym, try to find its definition within the document context first
+- If "${term}" is an acronym, find its definition within the document context first
 - Focus on how it's used specifically in this document
-- If it's a technical term, explain it in the context of this document's subject matter
-- Use the surrounding context to provide accurate, document-specific definitions
-- Keep it under 100 words and make it relevant to this specific document
+- Keep it to 2-3 sentences
+- Make it relevant to this specific document's context
 
 Document context: "${context}"`
 
@@ -33,14 +32,14 @@ Document context: "${context}"`
                messages: [
                  {
                    role: "system",
-                   content: "You are a helpful assistant that provides concise, accurate definitions and explanations. Focus on document-specific context and acronym definitions. Format your response in clear, readable markdown."
+                   content: "You are a helpful assistant that provides concise, accurate definitions. Keep responses to 2-3 sentences. Focus on essential meaning and document-specific context."
                  },
                  {
                    role: "user",
                    content: prompt
                  }
                ],
-               max_tokens: 250,
+               max_tokens: 150,
                temperature: 0.2,
              })
 
@@ -52,6 +51,7 @@ Document context: "${context}"`
              let source = ''
              let wikipediaUrl = ''
              let description = ''
+             let imageMessage = ''
              
              try {
                const imageResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/search-image`, {
@@ -69,6 +69,7 @@ Document context: "${context}"`
                  source = imageData.source || ''
                  wikipediaUrl = imageData.wikipediaUrl || ''
                  description = imageData.description || ''
+                 imageMessage = imageData.message || ''
                }
              } catch (imageError) {
                console.error('Error fetching image:', imageError)
@@ -81,7 +82,8 @@ Document context: "${context}"`
                imageAlt,
                source,
                wikipediaUrl,
-               description
+               description,
+               imageMessage
              })
 
     } catch (apiError: any) {
@@ -96,6 +98,7 @@ Document context: "${context}"`
       let source = ''
       let wikipediaUrl = ''
       let description = ''
+      let imageMessage = ''
       
       try {
         const imageResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/search-image`, {
@@ -113,6 +116,7 @@ Document context: "${context}"`
           source = imageData.source || ''
           wikipediaUrl = imageData.wikipediaUrl || ''
           description = imageData.description || ''
+          imageMessage = imageData.message || ''
         }
       } catch (imageError) {
         console.error('Error fetching image for fallback:', imageError)
@@ -126,6 +130,7 @@ Document context: "${context}"`
         source,
         wikipediaUrl,
         description,
+        imageMessage,
         fallback: true
       })
     }

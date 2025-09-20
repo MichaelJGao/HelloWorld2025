@@ -20,6 +20,7 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
   const [source, setSource] = useState<string>('')
   const [wikipediaUrl, setWikipediaUrl] = useState<string>('')
   const [description, setDescription] = useState<string>('')
+  const [imageMessage, setImageMessage] = useState<string>('')
   const [error, setError] = useState<string>('')
   const [isFallback, setIsFallback] = useState<boolean>(false)
 
@@ -64,6 +65,7 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
         setSource(data.source || '')
         setWikipediaUrl(data.wikipediaUrl || '')
         setDescription(data.description || '')
+        setImageMessage(data.message || '')
         
         // Show fallback indicator if using fallback summary
         if (data.fallback) {
@@ -153,7 +155,9 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
                   <div className="p-2 bg-gray-50 border-t border-gray-200">
                     <div className="flex items-center justify-between text-xs text-gray-600">
                       <span>
-                        {source === 'Wikipedia' ? '📖 Wikipedia' : `📷 ${source}`}
+                        {source === 'Wikipedia' ? '📖 Wikipedia' : 
+                         source === 'No image found on Wikipedia' ? '📷 No image found on Wikipedia' : 
+                         `📷 ${source}`}
                       </span>
                       {wikipediaUrl && (
                         <a

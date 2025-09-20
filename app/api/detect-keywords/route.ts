@@ -15,15 +15,15 @@ export async function POST(request: NextRequest) {
 
     // Try OpenAI first for intelligent keyword detection
     try {
-      const prompt = `Analyze the following text and identify the most important keywords, technical terms, acronyms, and concepts that would benefit from definitions or explanations. Focus on:
+             const prompt = `Find keywords from this article that are important to the main idea/purpose of the article or acronyms and hard terms. Focus on:
 
-1. Technical jargon and specialized terminology
-2. Acronyms and abbreviations
-3. Domain-specific concepts
-4. Complex terms that readers might not understand
-5. Important concepts central to the document's topic
+1. Terms central to the article's main purpose and core concepts
+2. Acronyms and abbreviations that need explanation
+3. Technical jargon and specialized terminology essential to understanding the topic
+4. Complex terms that are key to the article's argument or findings
+5. Domain-specific concepts that readers might not understand
 
-Exclude common words, basic vocabulary, and references/bibliography sections.
+Exclude common words, basic vocabulary, and references/bibliography sections. Only include terms that are truly important for understanding the article's main points.
 
 Text: "${text.substring(0, 3000)}"
 
@@ -36,7 +36,7 @@ Return a JSON array of objects with this structure:
   }
 ]
 
-Limit to 15-20 most important terms.`
+Limit to 12-15 most important terms that are essential to the article's main purpose.`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",

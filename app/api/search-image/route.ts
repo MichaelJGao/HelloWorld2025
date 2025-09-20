@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         imageUrl: getFallbackImageUrl(term),
         fallback: true,
-        source: 'Placeholder'
+        source: 'No image found on Wikipedia',
+        message: 'No image found on Wikipedia for this term'
       })
 
     } catch (apiError: any) {
@@ -87,7 +88,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         imageUrl: getFallbackImageUrl(term),
         fallback: true,
-        source: 'Placeholder'
+        source: 'No image found on Wikipedia',
+        message: 'No image found on Wikipedia for this term'
       })
     }
 

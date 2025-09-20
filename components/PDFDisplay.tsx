@@ -372,14 +372,36 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
     }
   }
 
-  const getEnhancedContext = (word: string, text: string, contextLength: number = 200): string => {
+  const getEnhancedContext = (word: string, text: string, contextLength: number = 150): string => {
     const index = text.toLowerCase().indexOf(word.toLowerCase())
     if (index === -1) return text.substring(0, contextLength)
     
-    const start = Math.max(0, index - contextLength)
-    const end = Math.min(text.length, index + word.length + contextLength)
+    // Find the sentence boundaries around the word
+    const beforeText = text.substring(0, index)
+    const afterText = text.substring(index + word.length)
     
-    return text.substring(start, end).trim()
+    // Find the start of the current sentence
+    const sentenceStart = Math.max(0, beforeText.lastIndexOf('.') + 1)
+    const sentenceEnd = Math.min(text.length, afterText.indexOf('.') + index + word.length + 1)
+    
+    // If we can't find sentence boundaries, use a smaller context window
+    if (sentenceStart === index || sentenceEnd === index + word.length) {
+      const start = Math.max(0, index - contextLength / 2)
+      const end = Math.min(text.length, index + word.length + contextLength / 2)
+      return text.substring(start, end).trim()
+    }
+    
+    // Return the sentence containing the word, but limit its length
+    const sentence = text.substring(sentenceStart, sentenceEnd).trim()
+    if (sentence.length > contextLength * 2) {
+      // If sentence is too long, take a portion around the word
+      const wordIndex = sentence.toLowerCase().indexOf(word.toLowerCase())
+      const start = Math.max(0, wordIndex - contextLength / 2)
+      const end = Math.min(sentence.length, wordIndex + word.length + contextLength / 2)
+      return sentence.substring(start, end).trim()
+    }
+    
+    return sentence
   }
 
   const handleMouseLeave = () => {
