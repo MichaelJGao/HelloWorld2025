@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Eye, EyeOff, Download, Search, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Eye, EyeOff, Download, Search, BookOpen, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react'
 import KeywordTooltip from './KeywordTooltip'
 import * as pdfjsLib from 'pdfjs-dist'
 
@@ -27,6 +27,8 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
   const [pdfDocument, setPdfDocument] = useState<any>(null)
   const [textLayers, setTextLayers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [zoom, setZoom] = useState(1.0)
+  const [showPdfView, setShowPdfView] = useState(true)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const textLayerRef = useRef<HTMLDivElement>(null)
 
@@ -70,7 +72,7 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
 
     try {
       const page = await doc.getPage(pageNum)
-      const viewport = page.getViewport({ scale: 1.5 })
+      const viewport = page.getViewport({ scale: 1.5 * zoom })
       const canvas = canvasRef.current
       const context = canvas.getContext('2d')!
       
@@ -97,6 +99,11 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
       setCurrentPage(pageNum)
       renderPage(pageNum)
     }
+  }
+
+  const handleZoom = (newZoom: number) => {
+    setZoom(newZoom)
+    renderPage(currentPage)
   }
 
   const highlightKeywords = useCallback((text: string) => {
@@ -182,6 +189,18 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
           <h3 className="text-xl font-semibold text-gray-800">Document View</h3>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowPdfView(!showPdfView)}
+              className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+            >
+              {showPdfView ? 'Show Text' : 'Show PDF'}
+            </button>
+          </div>
+        </div>
+
+        {/* PDF Controls */}
+        <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-2">
+            <button
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage <= 1}
               className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -199,6 +218,34 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Zoom:</span>
+            <button
+              onClick={() => handleZoom(0.5)}
+              className={`px-2 py-1 text-xs rounded ${zoom === 0.5 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            >
+              50%
+            </button>
+            <button
+              onClick={() => handleZoom(1.0)}
+              className={`px-2 py-1 text-xs rounded ${zoom === 1.0 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            >
+              100%
+            </button>
+            <button
+              onClick={() => handleZoom(1.5)}
+              className={`px-2 py-1 text-xs rounded ${zoom === 1.5 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            >
+              150%
+            </button>
+            <button
+              onClick={() => handleZoom(2.0)}
+              className={`px-2 py-1 text-xs rounded ${zoom === 2.0 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            >
+              200%
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -206,41 +253,54 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <p>Loading PDF...</p>
           </div>
-        ) : pdfDocument ? (
-          <div className="relative border border-gray-200 shadow-sm bg-white">
+        ) : showPdfView && pdfDocument ? (
+          <div className="relative border border-gray-200 shadow-sm bg-white overflow-auto">
             <canvas
               ref={canvasRef}
               className="w-full h-auto"
               style={{ display: 'block' }}
             />
-            {/* Simple text overlay for keyword highlighting */}
+            {/* Simple overlay for text selection only */}
             <div
               ref={textLayerRef}
               className="absolute inset-0 pointer-events-auto cursor-text"
               style={{ 
-                fontSize: '14px',
-                lineHeight: '1.4',
-                fontFamily: 'serif',
                 color: 'transparent',
-                userSelect: 'text'
+                userSelect: 'text',
+                fontSize: '12px',
+                lineHeight: '1.3',
+                fontFamily: 'serif',
+                padding: '16px'
               }}
               onMouseUp={handleTextSelection}
-              onMouseOver={handleKeywordHover}
-              onMouseLeave={handleMouseLeave}
             >
-              {/* Render the current page text with keyword highlighting */}
+              {/* Render invisible text for selection */}
               <div
-                className="p-4"
-                dangerouslySetInnerHTML={{
-                  __html: highlightKeywords(extractedText.split('\n\n')[currentPage - 1] || extractedText)
+                className="h-full overflow-hidden"
+                style={{
+                  fontSize: '12px',
+                  lineHeight: '1.3',
+                  fontFamily: 'serif'
                 }}
-              />
+              >
+                {extractedText.split('\n\n')[currentPage - 1] || extractedText}
+              </div>
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            <BookOpen className="mx-auto h-12 w-12 mb-4" />
-            <p>No PDF loaded</p>
+          <div className="border border-gray-200 shadow-sm bg-white p-6 min-h-[600px]">
+            <div className="mb-4 text-sm text-gray-600">
+              Page {currentPage} of {totalPages} • {keywords.length} keywords detected
+            </div>
+            <div
+              className="prose prose-sm max-w-none text-gray-800 leading-relaxed font-serif"
+              onMouseUp={handleTextSelection}
+              onMouseOver={handleKeywordHover}
+              onMouseLeave={handleMouseLeave}
+              dangerouslySetInnerHTML={{
+                __html: highlightKeywords((extractedText.split('\n\n')[currentPage - 1] || extractedText).replace(/\n/g, '<br>'))
+              }}
+            />
           </div>
         )}
       </div>
