@@ -6,6 +6,7 @@ import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye } from 'lucide-re
 import PDFDisplay from '@/components/PDFDisplay'
 import SummaryPanel from '@/components/SummaryPanel'
 import LandingPage from '@/components/LandingPage'
+import ThemeToggle from '@/components/ThemeToggle'
 import { extractTextFromPDF } from '@/lib/pdfProcessor'
 import { detectKeywords } from '@/lib/keywordDetector'
 
@@ -83,17 +84,17 @@ export default function Home() {
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => setShowLandingPage(true)}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
             >
               ← Back to Home
             </button>
             <div></div>
-            <div></div>
+            <ThemeToggle />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
             PDF Keyword Analyzer
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Upload a PDF document and get intelligent keyword summaries with hover tooltips. 
             Perfect for research papers, textbooks, and technical documents.
           </p>
@@ -106,25 +107,25 @@ export default function Home() {
               className={`
                 border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors
                 ${isDragActive 
-                  ? 'border-primary-500 bg-primary-50' 
-                  : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' 
+                  : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }
               `}
             >
               <input {...getInputProps()} />
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-lg font-medium text-gray-900 mb-2">
+              <Upload className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+              <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 {isDragActive ? 'Drop your PDF here' : 'Upload a PDF file'}
               </p>
-              <p className="text-gray-500">
+              <p className="text-gray-500 dark:text-gray-400">
                 Drag and drop or click to select a PDF file
               </p>
             </div>
             
             {error && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
+              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center">
                 <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-                <span className="text-red-700">{error}</span>
+                <span className="text-red-700 dark:text-red-400">{error}</span>
               </div>
             )}
           </div>
@@ -133,32 +134,32 @@ export default function Home() {
             {isProcessing ? (
               <div className="text-center py-12">
                 <Loader2 className="mx-auto h-12 w-12 text-primary-500 animate-spin mb-4" />
-                <p className="text-lg text-gray-600">Processing your PDF...</p>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-lg text-gray-600 dark:text-gray-300">Processing your PDF...</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                   Extracting text and analyzing keywords
                 </p>
               </div>
             ) : (
               <>
-                <div className="bg-white rounded-lg shadow-sm border p-4 flex items-center justify-between">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-4 flex items-center justify-between">
                   <div className="flex items-center">
                     <FileText className="h-8 w-8 text-primary-500 mr-3" />
                     <div>
-                      <h3 className="font-medium text-gray-900">{pdfFile.name}</h3>
-                      <p className="text-sm text-gray-500">
+                      <h3 className="font-medium text-gray-900 dark:text-white">{pdfFile.name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {keywords.length} keywords detected
                       </p>
                     </div>
                   </div>
                   
                   {/* Tab Navigation */}
-                  <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+                  <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                     <button
                       onClick={() => setActiveTab('viewer')}
                       className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
                         activeTab === 'viewer'
-                          ? 'bg-white text-primary-600 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
+                          ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     >
                       <Eye className="h-4 w-4 mr-1" />
@@ -168,8 +169,8 @@ export default function Home() {
                       onClick={() => setActiveTab('summary')}
                       className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
                         activeTab === 'summary'
-                          ? 'bg-white text-primary-600 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
+                          ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     >
                       <BookOpen className="h-4 w-4 mr-1" />
