@@ -158,14 +158,14 @@ DOCUMENT INFORMATION:
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b border-gray-200">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <FileText className="h-5 w-5 text-primary-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Document Analysis</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Document Analysis</h2>
             {source && (
-              <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                 {source}
               </span>
             )}
@@ -173,13 +173,13 @@ DOCUMENT INFORMATION:
           
           <div className="flex items-center space-x-2">
             {/* Sub-tab Navigation */}
-            <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
               <button
                 onClick={() => setActiveSubTab('summary')}
                 className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
                   activeSubTab === 'summary'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <FileText className="h-4 w-4 mr-1" />
@@ -189,8 +189,8 @@ DOCUMENT INFORMATION:
                 onClick={() => setActiveSubTab('sentiment')}
                 className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
                   activeSubTab === 'sentiment'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <Brain className="h-4 w-4 mr-1" />
@@ -202,7 +202,7 @@ DOCUMENT INFORMATION:
               <div className="flex items-center space-x-1">
                 <button
                   onClick={() => exportSummary('text')}
-                  className="flex items-center px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                  className="flex items-center px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                   title="Export as text"
                 >
                   <Download className="h-3 w-3 mr-1" />
@@ -210,7 +210,7 @@ DOCUMENT INFORMATION:
                 </button>
                 <button
                   onClick={() => exportSummary('markdown')}
-                  className="flex items-center px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
+                  className="flex items-center px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                   title="Export as markdown"
                 >
                   <Download className="h-3 w-3 mr-1" />
@@ -220,7 +220,7 @@ DOCUMENT INFORMATION:
             )}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               {isExpanded ? 'Collapse' : 'Expand'}
             </button>
@@ -231,8 +231,8 @@ DOCUMENT INFORMATION:
       <div className="p-4">
         {!summaryData ? (
           <div className="text-center py-8">
-            <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-gray-600 mb-4">
+            <BookOpen className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
               Generate an intelligent summary of your document
             </p>
             <div className="space-y-2">
@@ -295,10 +295,10 @@ DOCUMENT INFORMATION:
               </button>
               
               {/* Debug Info */}
-              <div className="text-xs text-gray-500 text-center">
+              <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
                 <p>Text length: {extractedText.length} characters</p>
                 {extractedText.length > 8000 && (
-                  <p className="text-orange-600">⚠️ Text will be truncated to 8000 chars</p>
+                  <p className="text-orange-600 dark:text-orange-400">⚠️ Text will be truncated to 8000 chars</p>
                 )}
                 <p>Keywords: {keywords.length}</p>
                 <p>File: {fileName}</p>
@@ -326,7 +326,7 @@ DOCUMENT INFORMATION:
                       alert('Test failed: ' + err)
                     }
                   }}
-                  className="text-xs text-blue-600 hover:text-blue-800 underline block"
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline block"
                 >
                   Test API Connection
                 </button>
@@ -357,16 +357,16 @@ DOCUMENT INFORMATION:
                       alert('Real data test failed: ' + err)
                     }
                   }}
-                  className="text-xs text-green-600 hover:text-green-800 underline block"
+                  className="text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 underline block"
                 >
                   Test with Real Data
                 </button>
               </div>
             </div>
             {error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
+              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center">
                 <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
-                <span className="text-red-700 text-sm">{error}</span>
+                <span className="text-red-700 dark:text-red-400 text-sm">{error}</span>
               </div>
             )}
           </div>
@@ -376,49 +376,49 @@ DOCUMENT INFORMATION:
               <>
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <Clock className="h-5 w-5 text-blue-500 mr-2" />
                 <div>
-                  <p className="text-sm text-blue-600">Reading Time</p>
-                  <p className="font-medium text-blue-900">{summaryData.readingTime}</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">Reading Time</p>
+                  <p className="font-medium text-blue-900 dark:text-blue-100">{summaryData.readingTime}</p>
                 </div>
               </div>
-              <div className="flex items-center p-3 bg-green-50 rounded-lg">
+              <div className="flex items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <Users className="h-5 w-5 text-green-500 mr-2" />
                 <div>
-                  <p className="text-sm text-green-600">Complexity</p>
-                  <p className="font-medium text-green-900 capitalize">{summaryData.complexity}</p>
+                  <p className="text-sm text-green-600 dark:text-green-400">Complexity</p>
+                  <p className="font-medium text-green-900 dark:text-green-100 capitalize">{summaryData.complexity}</p>
                 </div>
               </div>
-              <div className="flex items-center p-3 bg-purple-50 rounded-lg">
+              <div className="flex items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                 <Target className="h-5 w-5 text-purple-500 mr-2" />
                 <div>
-                  <p className="text-sm text-purple-600">Document Type</p>
-                  <p className="font-medium text-purple-900">{summaryData.documentType}</p>
+                  <p className="text-sm text-purple-600 dark:text-purple-400">Document Type</p>
+                  <p className="font-medium text-purple-900 dark:text-purple-100">{summaryData.documentType}</p>
                 </div>
               </div>
             </div>
 
             {/* Main Topic */}
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Main Topic</h3>
-              <p className="text-gray-700">{summaryData.mainTopic}</p>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Main Topic</h3>
+              <p className="text-gray-700 dark:text-gray-300">{summaryData.mainTopic}</p>
             </div>
 
             {/* Executive Summary */}
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Executive Summary</h3>
-              <p className="text-gray-700 leading-relaxed">{summaryData.summary}</p>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Executive Summary</h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{summaryData.summary}</p>
             </div>
 
             {/* Key Findings */}
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Key Findings</h3>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Key Findings</h3>
               <ul className="space-y-1">
                 {summaryData.keyFindings.map((finding, index) => (
                   <li key={index} className="flex items-start">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700">{finding}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{finding}</span>
                   </li>
                 ))}
               </ul>
@@ -426,12 +426,12 @@ DOCUMENT INFORMATION:
 
             {/* Important Concepts */}
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Important Concepts</h3>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Important Concepts</h3>
               <div className="flex flex-wrap gap-2">
                 {summaryData.importantConcepts.map((concept, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1 bg-primary-100 text-primary-800 text-sm rounded-full"
+                    className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 text-sm rounded-full"
                   >
                     {concept}
                   </span>
@@ -441,24 +441,24 @@ DOCUMENT INFORMATION:
 
             {/* Expanded Content */}
             {isExpanded && (
-              <div className="space-y-4 pt-4 border-t border-gray-200">
+              <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">Methodology</h3>
-                  <p className="text-gray-700">{summaryData.methodology}</p>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Methodology</h3>
+                  <p className="text-gray-700 dark:text-gray-300">{summaryData.methodology}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">Target Audience</h3>
-                  <p className="text-gray-700">{summaryData.targetAudience}</p>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Target Audience</h3>
+                  <p className="text-gray-700 dark:text-gray-300">{summaryData.targetAudience}</p>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">Practical Applications</h3>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Practical Applications</h3>
                   <ul className="space-y-1">
                     {summaryData.practicalApplications.map((app, index) => (
                       <li key={index} className="flex items-start">
                         <Lightbulb className="h-4 w-4 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{app}</span>
+                        <span className="text-gray-700 dark:text-gray-300">{app}</span>
                       </li>
                     ))}
                   </ul>
@@ -467,17 +467,17 @@ DOCUMENT INFORMATION:
             )}
 
             {/* Regenerate Button */}
-            <div className="pt-4 border-t border-gray-200">
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => generateSummary(true)}
                 disabled={isGenerating}
-                className="flex items-center text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
                 {isGenerating ? 'Regenerating...' : 'Regenerate Summary'}
               </button>
               {source === 'Cache' && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Summary loaded from cache. Click regenerate for a fresh analysis.
                 </p>
               )}

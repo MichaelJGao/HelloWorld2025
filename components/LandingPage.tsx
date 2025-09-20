@@ -8,6 +8,7 @@ import {
   Play,
   Brain
 } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 
 interface LandingPageProps {
   onGetStarted: () => void
@@ -21,7 +22,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Navigation */}
       <nav className="relative z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -33,12 +34,15 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
               PDF Analyzer
             </span>
           </div>
-          <button
-            onClick={onGetStarted}
-            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-          >
-            Get Started
-          </button>
+          <div className="flex items-center space-x-4">
+            <ThemeToggle />
+            <button
+              onClick={onGetStarted}
+              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            >
+              Get Started
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -47,9 +51,9 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         <div className="max-w-7xl mx-auto w-full">
           <div className="text-center">
             <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <div className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-blue-200 mb-8">
+              <div className="inline-flex items-center px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-blue-200 dark:border-gray-600 mb-8">
                 <Sparkles className="w-4 h-4 text-yellow-500 mr-2" />
-                <span className="text-sm font-medium text-gray-700">AI-Powered Document Analysis</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">AI-Powered Document Analysis</span>
               </div>
               
               <h1 className="text-5xl md:text-7xl font-bold mb-6">
@@ -57,10 +61,10 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                   Analyze PDFs
                 </span>
                 <br />
-                <span className="text-gray-800">Like Never Before</span>
+                <span className="text-gray-800 dark:text-white">Like Never Before</span>
               </h1>
               
-              <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
                 Transform your research workflow with AI-powered keyword detection, 
                 intelligent summaries, and interactive tooltips. Perfect for academics, 
                 researchers, and professionals.
@@ -75,7 +79,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </button>
                 
-                <button className="group px-8 py-4 bg-white/80 backdrop-blur-sm text-gray-700 rounded-full text-lg font-semibold border border-gray-200 hover:shadow-lg transition-all duration-300 flex items-center">
+                <button className="group px-8 py-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-gray-700 dark:text-gray-300 rounded-full text-lg font-semibold border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300 flex items-center">
                   <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                   Watch Demo
                 </button>
@@ -91,35 +95,35 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* Features Section */}
-      <section className="px-6 py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <section className="px-6 py-20 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="text-center p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <FileText className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Smart Keyword Detection</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Smart Keyword Detection</h3>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                 AI-powered keyword extraction with contextual definitions and interactive tooltips for better understanding.
               </p>
             </div>
             
-            <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="text-center p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
               <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Intelligent Summaries</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Intelligent Summaries</h3>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                 Generate comprehensive document summaries with key findings, methodology, and practical applications.
               </p>
             </div>
             
-            <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="text-center p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
               <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Brain className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Sentiment Analysis</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Sentiment Analysis</h3>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                 Analyze emotional tone and sentiment to understand the document's perspective and audience impact.
               </p>
             </div>

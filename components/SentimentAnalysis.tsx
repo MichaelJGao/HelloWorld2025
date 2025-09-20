@@ -114,37 +114,37 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
   const getSentimentBgColor = (sentiment: string) => {
     switch (sentiment.toLowerCase()) {
       case 'positive':
-        return 'bg-green-50 border-green-200'
+        return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
       case 'negative':
-        return 'bg-red-50 border-red-200'
+        return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
       case 'mixed':
-        return 'bg-yellow-50 border-yellow-200'
+        return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
       default:
-        return 'bg-gray-50 border-gray-200'
+        return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
     }
   }
 
   const getScoreColor = (score: number) => {
-    if (score > 0.3) return 'text-green-600'
-    if (score < -0.3) return 'text-red-600'
-    return 'text-gray-600'
+    if (score > 0.3) return 'text-green-600 dark:text-green-400'
+    if (score < -0.3) return 'text-red-600 dark:text-red-400'
+    return 'text-gray-600 dark:text-gray-400'
   }
 
   const getScoreBgColor = (score: number) => {
-    if (score > 0.3) return 'bg-green-100'
-    if (score < -0.3) return 'bg-red-100'
-    return 'bg-gray-100'
+    if (score > 0.3) return 'bg-green-100 dark:bg-green-900/30'
+    if (score < -0.3) return 'bg-red-100 dark:bg-red-900/30'
+    return 'bg-gray-100 dark:bg-gray-700'
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b border-gray-200">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <Brain className="h-5 w-5 text-purple-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Sentiment Analysis</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Sentiment Analysis</h2>
             {source && (
-              <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                 {source}
               </span>
             )}
@@ -152,7 +152,7 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
           <button
             onClick={() => analyzeSentiment(true)}
             disabled={isAnalyzing}
-            className="flex items-center text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isAnalyzing ? 'animate-spin' : ''}`} />
             {isAnalyzing ? 'Analyzing...' : 'Re-analyze'}
@@ -164,7 +164,7 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
         {!sentimentData ? (
           <div className="text-center py-8">
             <Brain className="mx-auto h-12 w-12 text-purple-400 mb-4" />
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
               Analyze the emotional tone and sentiment of your document
             </p>
             <button
@@ -185,9 +185,9 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
               )}
             </button>
             {error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
+              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center">
                 <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
-                <span className="text-red-700 text-sm">{error}</span>
+                <span className="text-red-700 dark:text-red-400 text-sm">{error}</span>
               </div>
             )}
           </div>
@@ -198,7 +198,7 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
                   {getSentimentIcon(sentimentData.overallSentiment)}
-                  <h3 className="text-xl font-semibold text-gray-800 ml-3">
+                  <h3 className="text-xl font-semibold text-gray-800 dark:text-white ml-3">
                     Overall Sentiment: {sentimentData.overallSentiment.charAt(0).toUpperCase() + sentimentData.overallSentiment.slice(1)}
                   </h3>
                 </div>
@@ -206,18 +206,18 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
                   {sentimentData.sentimentScore > 0 ? '+' : ''}{sentimentData.sentimentScore}
                 </div>
               </div>
-              <p className="text-gray-700 mb-2">{sentimentData.summary}</p>
-              <div className="flex items-center text-sm text-gray-600">
+              <p className="text-gray-700 dark:text-gray-300 mb-2">{sentimentData.summary}</p>
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                 <Target className="h-4 w-4 mr-1" />
                 <span>Confidence: {sentimentData.confidence}%</span>
               </div>
             </div>
 
             {/* Sentiment Score Visualization */}
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Sentiment Score</h3>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Sentiment Score</h3>
               <div className="relative">
-                <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
+                <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div 
                     className={`h-full bg-gradient-to-r ${getSentimentColor(sentimentData.overallSentiment)} transition-all duration-1000`}
                     style={{ 
@@ -225,13 +225,13 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
                     }}
                   />
                 </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                   <span>Negative (-1)</span>
                   <span>Neutral (0)</span>
                   <span>Positive (+1)</span>
                 </div>
                 <div 
-                  className="absolute top-0 w-1 h-4 bg-white border-2 border-gray-400 rounded-full transform -translate-x-1/2"
+                  className="absolute top-0 w-1 h-4 bg-white dark:bg-gray-300 border-2 border-gray-400 dark:border-gray-500 rounded-full transform -translate-x-1/2"
                   style={{ 
                     left: `${((sentimentData.sentimentScore + 1) / 2) * 100}%` 
                   }}
@@ -241,20 +241,20 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
 
             {/* Emotional Tone */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Emotional Tone</h3>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-gray-700">{sentimentData.emotionalTone}</p>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">Emotional Tone</h3>
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-gray-700 dark:text-gray-300">{sentimentData.emotionalTone}</p>
               </div>
             </div>
 
             {/* Key Indicators */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Key Sentiment Indicators</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">Key Sentiment Indicators</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {sentimentData.keyIndicators.map((indicator, index) => (
-                  <div key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-700 text-sm">{indicator}</span>
+                    <span className="text-gray-700 dark:text-gray-300 text-sm">{indicator}</span>
                   </div>
                 ))}
               </div>
@@ -262,11 +262,11 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
 
             {/* Audience Perception */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Audience Perception</h3>
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">Audience Perception</h3>
+              <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
                 <div className="flex items-start">
                   <Info className="h-5 w-5 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <p className="text-gray-700">{sentimentData.audiencePerception}</p>
+                  <p className="text-gray-700 dark:text-gray-300">{sentimentData.audiencePerception}</p>
                 </div>
               </div>
             </div>
@@ -274,16 +274,16 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
             {/* Section Breakdown */}
             {sentimentData.sectionBreakdown && sentimentData.sectionBreakdown.length > 1 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Section Breakdown</h3>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">Section Breakdown</h3>
                 <div className="space-y-3">
                   {sentimentData.sectionBreakdown.map((section, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                       <div className="flex items-center">
                         {getSentimentIcon(section.sentiment)}
-                        <span className="ml-2 text-gray-700 font-medium">{section.section}</span>
+                        <span className="ml-2 text-gray-700 dark:text-gray-300 font-medium">{section.section}</span>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className="text-sm text-gray-600 capitalize">{section.sentiment}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">{section.sentiment}</span>
                         <div className={`px-2 py-1 rounded text-xs font-medium ${getScoreBgColor(section.score)} ${getScoreColor(section.score)}`}>
                           {section.score > 0 ? '+' : ''}{section.score}
                         </div>
@@ -295,17 +295,17 @@ export default function SentimentAnalysis({ extractedText, fileName }: Sentiment
             )}
 
             {/* Regenerate Button */}
-            <div className="pt-4 border-t border-gray-200">
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => analyzeSentiment(true)}
                 disabled={isAnalyzing}
-                className="flex items-center text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${isAnalyzing ? 'animate-spin' : ''}`} />
                 {isAnalyzing ? 'Re-analyzing...' : 'Re-analyze Sentiment'}
               </button>
               {source === 'Cache' && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Sentiment analysis loaded from cache. Click re-analyze for fresh analysis.
                 </p>
               )}

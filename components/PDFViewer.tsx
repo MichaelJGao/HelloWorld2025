@@ -81,14 +81,14 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
     : extractedText
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b border-gray-200">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Document Viewer</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Document Viewer</h2>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowText(!showText)}
-              className="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              className="flex items-center px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
             >
               {showText ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
               {showText ? 'Hide Text' : 'Show Text'}
@@ -96,7 +96,7 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
             <a
               href={URL.createObjectURL(file)}
               download={file.name}
-              className="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              className="flex items-center px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
             >
               <Download className="h-4 w-4 mr-1" />
               Download
@@ -105,13 +105,13 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
         </div>
         
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
           <input
             type="text"
             placeholder="Search in document..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
       </div>
@@ -119,10 +119,10 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
       <div className="p-6">
         {showText ? (
           <div className="space-y-4">
-            <div className="text-sm text-gray-500 mb-4">
+            <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               {filteredText.split('\n').length} lines • {filteredText.length} characters
               {searchTerm && (
-                <span className="ml-2 text-primary-600">
+                <span className="ml-2 text-primary-600 dark:text-primary-400">
                   • Filtered by: "{searchTerm}"
                 </span>
               )}
@@ -130,7 +130,7 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
             
             <div
               ref={textRef}
-              className="prose prose-sm max-w-none text-gray-800 leading-relaxed"
+              className="prose prose-sm max-w-none text-gray-800 dark:text-gray-200 leading-relaxed"
               onMouseUp={handleTextSelection}
               onMouseOver={handleKeywordHover}
               onMouseLeave={handleMouseLeave}
@@ -140,7 +140,7 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
             />
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <EyeOff className="mx-auto h-12 w-12 mb-4" />
             <p>Text view is hidden</p>
             <p className="text-sm">Click "Show Text" to view the extracted content</p>
