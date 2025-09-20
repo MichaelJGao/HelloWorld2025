@@ -15,25 +15,34 @@ export async function POST(request: NextRequest) {
 
     // Try OpenAI first, but provide fallback if quota exceeded
     try {
-      const prompt = searchOnline 
-        ? `Provide a concise, Wikipedia-style summary for the term "${term}". Include key information, definition, and context. Keep it under 150 words.`
-        : `Based on the document context: "${context}", provide a concise definition and explanation for the term "${term}". Keep it under 100 words and focus on how it's used in this specific document.`
+             const prompt = searchOnline
+               ? `Provide a concise, Wikipedia-style summary for the term "${term}". Include key information, definition, and context. Keep it under 150 words.`
+               : `Based on the document context provided, give a concise definition and explanation for the term "${term}". 
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful assistant that provides concise, accurate definitions and explanations. Format your response in clear, readable markdown."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        max_tokens: 200,
-        temperature: 0.3,
-      })
+IMPORTANT: 
+- If "${term}" is an acronym, try to find its definition within the document context first
+- Focus on how it's used specifically in this document
+- If it's a technical term, explain it in the context of this document's subject matter
+- Use the surrounding context to provide accurate, document-specific definitions
+- Keep it under 100 words and make it relevant to this specific document
+
+Document context: "${context}"`
+
+             const completion = await openai.chat.completions.create({
+               model: "gpt-3.5-turbo",
+               messages: [
+                 {
+                   role: "system",
+                   content: "You are a helpful assistant that provides concise, accurate definitions and explanations. Focus on document-specific context and acronym definitions. Format your response in clear, readable markdown."
+                 },
+                 {
+                   role: "user",
+                   content: prompt
+                 }
+               ],
+               max_tokens: 250,
+               temperature: 0.2,
+             })
 
       const summary = completion.choices[0]?.message?.content || 'No summary available.'
       const imageUrl = '' // Skip image generation for now
@@ -66,6 +75,9 @@ export async function POST(request: NextRequest) {
 }
 
 function generateFallbackSummary(term: string, context: string, searchOnline: boolean): string {
+  // Check if term is an acronym (2-6 uppercase letters)
+  const isAcronym = /^[A-Z]{2,6}$/.test(term)
+  
   const commonDefinitions: { [key: string]: string } = {
     'research': '**Research** is a systematic investigation to establish facts or principles. It involves gathering information, analyzing data, and drawing conclusions to advance knowledge in a particular field.',
     'analysis': '**Analysis** is the detailed examination of the elements or structure of something. It involves breaking down complex information into smaller parts to understand how they work together.',
@@ -103,9 +115,18 @@ function generateFallbackSummary(term: string, context: string, searchOnline: bo
     }
   }
   
+  // Special handling for acronyms
+  if (isAcronym && context && context.length > 50) {
+    return `**${term}** is an acronym that appears in this document. Based on the context: "${context.substring(0, 200)}...", this term is used in relation to the document's main topic. The full expansion of this acronym may be defined elsewhere in the document.`
+  }
+
   // Generic fallback
   if (context && context.length > 50) {
     return `**${term}** appears to be an important concept in this document. Based on the context: "${context.substring(0, 200)}...", this term likely relates to the main topic being discussed. For a more detailed definition, consider consulting a specialized dictionary or academic resource.`
+  }
+  
+  if (isAcronym) {
+    return `**${term}** is an acronym that appears in this document. The full expansion and definition may be provided elsewhere in the text. Look for the first occurrence of this acronym, as it's often defined when first introduced.`
   }
   
   return `**${term}** is a term that appears in this document. While we don't have a specific definition available, it seems to be relevant to the document's content. Consider looking up this term in a dictionary or academic resource for more information.`

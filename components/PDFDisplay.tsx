@@ -1,215 +1,302 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
-import { Eye, EyeOff, Download, Search, FileText } from 'lucide-react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { Eye, EyeOff, Download, Search, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
 import KeywordTooltip from './KeywordTooltip'
+import * as pdfjsLib from 'pdfjs-dist'
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`
 
 interface PDFDisplayProps {
-  file: File
+  file: File | null
   extractedText: string
-  keywords: Array<{word: string, definition: string, context: string}>
+  keywords: Array<{ word: string; definition: string; context: string }>
 }
 
 export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplayProps) {
-  const [showText, setShowText] = useState(true)
+  const [showTextView, setShowTextView] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedText, setSelectedText] = useState('')
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
+  const [filteredText, setFilteredText] = useState(extractedText)
+  const [hoveredKeyword, setHoveredKeyword] = useState<{ word: string; definition: string; context: string } | null>(null)
+  const [selectedText, setSelectedText] = useState<string | null>(null)
   const [showTooltip, setShowTooltip] = useState(false)
-  const [hoveredKeyword, setHoveredKeyword] = useState<{word: string, definition: string, context: string} | null>(null)
-  const [pdfPages, setPdfPages] = useState<Array<{pageNumber: number, text: string}>>([])
-  const textRef = useRef<HTMLDivElement>(null)
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
+  const [pdfDocument, setPdfDocument] = useState<any>(null)
+  const [textLayers, setTextLayers] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const textLayerRef = useRef<HTMLDivElement>(null)
 
-  // Split text into pages (simulate PDF pages)
   useEffect(() => {
-    if (extractedText) {
-      const wordsPerPage = 300 // Approximate words per page
-      const words = extractedText.split(/\s+/)
-      const pages = []
-      
-      for (let i = 0; i < words.length; i += wordsPerPage) {
-        const pageWords = words.slice(i, i + wordsPerPage)
-        const pageText = pageWords.join(' ')
-        pages.push({
-          pageNumber: Math.floor(i / wordsPerPage) + 1,
-          text: pageText
-        })
-      }
-      
-      setPdfPages(pages)
-    }
+    setFilteredText(extractedText)
   }, [extractedText])
 
-  // Highlight keywords in the text
-  const highlightKeywords = (text: string) => {
+  useEffect(() => {
+    if (searchTerm) {
+      const regex = new RegExp(searchTerm, 'gi')
+      setFilteredText(extractedText.replace(regex, (match) => `<mark>${match}</mark>`))
+    } else {
+      setFilteredText(extractedText)
+    }
+  }, [searchTerm, extractedText])
+
+  useEffect(() => {
+    if (file) {
+      loadPdfDocument(file)
+    }
+  }, [file])
+
+  const loadPdfDocument = async (pdfFile: File) => {
+    setIsLoading(true)
+    try {
+      const arrayBuffer = await pdfFile.arrayBuffer()
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      setPdfDocument(pdf)
+      setTotalPages(pdf.numPages)
+      await renderPage(1, pdf)
+    } catch (error) {
+      console.error('Error loading PDF:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const renderPage = async (pageNum: number, pdf?: any) => {
+    const doc = pdf || pdfDocument
+    if (!doc || !canvasRef.current) return
+
+    try {
+      const page = await doc.getPage(pageNum)
+      const viewport = page.getViewport({ scale: 1.5 })
+      const canvas = canvasRef.current
+      const context = canvas.getContext('2d')!
+      
+      canvas.height = viewport.height
+      canvas.width = viewport.width
+
+      // Render the page
+      await page.render({
+        canvasContext: context,
+        viewport: viewport,
+      }).promise
+
+      // Get text content for highlighting
+      const textContent = await page.getTextContent()
+      setTextLayers([textContent])
+      
+    } catch (error) {
+      console.error('Error rendering page:', error)
+    }
+  }
+
+  const goToPage = (pageNum: number) => {
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      setCurrentPage(pageNum)
+      renderPage(pageNum)
+    }
+  }
+
+  const highlightKeywords = useCallback((text: string) => {
     let highlightedText = text
-    
-    // Sort keywords by length (longest first) to avoid partial matches
+
     const sortedKeywords = [...keywords].sort((a, b) => b.word.length - a.word.length)
-    
+
     sortedKeywords.forEach(keyword => {
       const regex = new RegExp(`\\b${keyword.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
       highlightedText = highlightedText.replace(regex, (match) => {
         return `<span class="keyword" data-keyword="${keyword.word}">${match}</span>`
       })
     })
-    
-    return highlightedText
-  }
 
-  // Handle text selection
+    return highlightedText
+  }, [keywords])
+
   const handleTextSelection = () => {
     const selection = window.getSelection()
-    if (selection && selection.toString().trim()) {
-      setSelectedText(selection.toString().trim())
+    if (selection && selection.toString().length > 0) {
+      const text = selection.toString().trim()
+      // Get enhanced context around the selected text
+      const enhancedContext = getEnhancedContext(text, extractedText, 150)
+      setSelectedText(text)
+      setHoveredKeyword(null)
       const range = selection.getRangeAt(0)
       const rect = range.getBoundingClientRect()
       setTooltipPosition({
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10
+        x: rect.left + window.scrollX + rect.width / 2,
+        y: rect.top + window.scrollY - 10,
       })
       setShowTooltip(true)
     }
   }
 
-  // Handle keyword hover
   const handleKeywordHover = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement
     if (target.classList.contains('keyword')) {
-      const word = target.textContent || ''
+      const word = target.getAttribute('data-keyword') || ''
       const keyword = keywords.find(k => k.word.toLowerCase() === word.toLowerCase())
       if (keyword) {
-        setHoveredKeyword(keyword)
+        // Get better context around the keyword
+        const enhancedKeyword = {
+          ...keyword,
+          context: getEnhancedContext(word, extractedText)
+        }
+        setHoveredKeyword(enhancedKeyword)
+        setSelectedText(null)
         setTooltipPosition({
           x: e.clientX,
-          y: e.clientY - 10
+          y: e.clientY - 10,
         })
         setShowTooltip(true)
       }
     }
   }
 
+  const getEnhancedContext = (word: string, text: string, contextLength: number = 200): string => {
+    const index = text.toLowerCase().indexOf(word.toLowerCase())
+    if (index === -1) return text.substring(0, contextLength)
+    
+    const start = Math.max(0, index - contextLength)
+    const end = Math.min(text.length, index + word.length + contextLength)
+    
+    return text.substring(start, end).trim()
+  }
+
   const handleMouseLeave = () => {
     setShowTooltip(false)
     setHoveredKeyword(null)
+    setSelectedText(null)
   }
 
-  // Filter text based on search
-  const filteredPages = searchTerm 
-    ? pdfPages.filter(page => 
-        page.text.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : pdfPages
+  if (!file) {
+    return null
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-            <FileText className="h-5 w-5 mr-2 text-primary-500" />
-            Document Viewer
-          </h2>
-          <div className="flex items-center space-x-2">
+    <div className="flex flex-col lg:flex-row gap-6 mt-8">
+      {/* PDF Viewer Section */}
+      <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold text-gray-800">Document View</h3>
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowText(!showText)}
-              className="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {showText ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-              {showText ? 'Hide Text' : 'Show Text'}
+              <ChevronLeft className="h-4 w-4" />
             </button>
-            <a
-              href={URL.createObjectURL(file)}
-              download={file.name}
-              className="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            <span className="text-sm text-gray-600 min-w-[80px] text-center">
+              {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <Download className="h-4 w-4 mr-1" />
-              Download
-            </a>
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
-        
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search in document..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-        </div>
+
+        {isLoading ? (
+          <div className="text-center py-12 text-gray-500">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p>Loading PDF...</p>
+          </div>
+        ) : pdfDocument ? (
+          <div className="relative border border-gray-200 shadow-sm bg-white">
+            <canvas
+              ref={canvasRef}
+              className="w-full h-auto"
+              style={{ display: 'block' }}
+            />
+            {/* Simple text overlay for keyword highlighting */}
+            <div
+              ref={textLayerRef}
+              className="absolute inset-0 pointer-events-auto cursor-text"
+              style={{ 
+                fontSize: '14px',
+                lineHeight: '1.4',
+                fontFamily: 'serif',
+                color: 'transparent',
+                userSelect: 'text'
+              }}
+              onMouseUp={handleTextSelection}
+              onMouseOver={handleKeywordHover}
+              onMouseLeave={handleMouseLeave}
+            >
+              {/* Render the current page text with keyword highlighting */}
+              <div
+                className="p-4"
+                dangerouslySetInnerHTML={{
+                  __html: highlightKeywords(extractedText.split('\n\n')[currentPage - 1] || extractedText)
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            <BookOpen className="mx-auto h-12 w-12 mb-4" />
+            <p>No PDF loaded</p>
+          </div>
+        )}
       </div>
 
-      <div className="p-6">
-        {showText ? (
-          <div className="space-y-6">
-            <div className="text-sm text-gray-500 mb-4">
-              {filteredPages.length} pages • {keywords.length} keywords detected
+      {/* Text Viewer Section */}
+      <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-md overflow-y-auto max-h-[80vh]">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold text-gray-800">Text View</h3>
+          <button
+            onClick={() => setShowTextView(!showTextView)}
+            className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+            title={showTextView ? 'Hide Text View' : 'Show Text View'}
+          >
+            {showTextView ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {showTextView ? (
+          <div>
+            <div className="relative mb-4">
+              <input
+                type="text"
+                placeholder="Search in document..."
+                className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            </div>
+
+            <div className="mb-4 text-sm text-gray-600">
               {searchTerm && (
-                <span className="ml-2 text-primary-600">
+                <span>
                   • Filtered by: "{searchTerm}"
                 </span>
               )}
             </div>
-            
-            {/* PDF-like page display */}
-            <div className="space-y-4">
-              {filteredPages.map((page, index) => (
-                <div
-                  key={page.pageNumber}
-                  className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 min-h-[800px]"
-                  style={{
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                    background: 'linear-gradient(to bottom, #ffffff 0%, #fafafa 100%)'
-                  }}
-                >
-                  {/* Page header */}
-                  <div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-200">
-                    <span className="text-sm text-gray-500 font-medium">
-                      Page {page.pageNumber}
-                    </span>
-                    <span className="text-sm text-gray-400">
-                      {file.name}
-                    </span>
-                  </div>
-                  
-                  {/* Page content */}
-                  <div
-                    ref={textRef}
-                    className="prose prose-sm max-w-none text-gray-800 leading-relaxed"
-                    style={{
-                      fontFamily: 'Georgia, serif',
-                      fontSize: '14px',
-                      lineHeight: '1.6'
-                    }}
-                    onMouseUp={handleTextSelection}
-                    onMouseOver={handleKeywordHover}
-                    onMouseLeave={handleMouseLeave}
-                    dangerouslySetInnerHTML={{
-                      __html: highlightKeywords(page.text.replace(/\n/g, '<br>'))
-                    }}
-                  />
-                  
-                  {/* Page footer */}
-                  <div className="mt-8 pt-4 border-t border-gray-200 text-center">
-                    <span className="text-xs text-gray-400">
-                      {page.pageNumber}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+
+            <div
+              className="prose prose-sm max-w-none text-gray-800 leading-relaxed font-serif"
+              onMouseUp={handleTextSelection}
+              onMouseOver={handleKeywordHover}
+              onMouseLeave={handleMouseLeave}
+              dangerouslySetInnerHTML={{
+                __html: highlightKeywords(filteredText.replace(/\n/g, '<br>'))
+              }}
+            />
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">
             <EyeOff className="mx-auto h-12 w-12 mb-4" />
             <p>Text view is hidden</p>
-            <p className="text-sm">Click "Show Text" to view the extracted content</p>
           </div>
         )}
       </div>
 
-      {/* Tooltip */}
       {showTooltip && (
         <KeywordTooltip
           position={tooltipPosition}

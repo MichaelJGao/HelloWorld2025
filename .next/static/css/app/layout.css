@@ -645,6 +645,12 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(191 219 254 / var(--tw-bg-opacity, 1));
 }
+.pointer-events-none {
+  pointer-events: none;
+}
+.pointer-events-auto {
+  pointer-events: auto;
+}
 .fixed {
   position: fixed;
 }
@@ -653,6 +659,9 @@ video {
 }
 .relative {
   position: relative;
+}
+.inset-0 {
+  inset: 0px;
 }
 .left-3 {
   left: 0.75rem;
@@ -715,6 +724,9 @@ video {
 .mt-8 {
   margin-top: 2rem;
 }
+.block {
+  display: block;
+}
 .flex {
   display: flex;
 }
@@ -748,6 +760,12 @@ video {
 .h-2 {
   height: 0.5rem;
 }
+.h-auto {
+  height: auto;
+}
+.max-h-\[80vh\] {
+  max-height: 80vh;
+}
 .min-h-screen {
   min-height: 100vh;
 }
@@ -774,6 +792,9 @@ video {
 }
 .w-2 {
   width: 0.5rem;
+}
+.min-w-\[80px\] {
+  min-width: 80px;
 }
 .max-w-2xl {
   max-width: 42rem;
@@ -812,8 +833,14 @@ video {
 .cursor-pointer {
   cursor: pointer;
 }
+.cursor-text {
+  cursor: text;
+}
 .grid-cols-1 {
   grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.flex-col {
+  flex-direction: column;
 }
 .items-start {
   align-items: flex-start;
@@ -829,6 +856,9 @@ video {
 }
 .gap-6 {
   gap: 1.5rem;
+}
+.gap-2 {
+  gap: 0.5rem;
 }
 .space-x-2 > :not([hidden]) ~ :not([hidden]) {
   --tw-space-x-reverse: 0;
@@ -852,6 +882,9 @@ video {
 }
 .overflow-hidden {
   overflow: hidden;
+}
+.overflow-y-auto {
+  overflow-y: auto;
 }
 .rounded {
   border-radius: 0.25rem;
@@ -877,6 +910,9 @@ video {
 .border-t {
   border-top-width: 1px;
 }
+.border-b-2 {
+  border-bottom-width: 2px;
+}
 .border-dashed {
   border-style: dashed;
 }
@@ -899,6 +935,10 @@ video {
 .border-red-200 {
   --tw-border-opacity: 1;
   border-color: rgb(254 202 202 / var(--tw-border-opacity, 1));
+}
+.border-blue-500 {
+  --tw-border-opacity: 1;
+  border-color: rgb(59 130 246 / var(--tw-border-opacity, 1));
 }
 .bg-gray-100 {
   --tw-bg-opacity: 1;
@@ -942,6 +982,9 @@ video {
 }
 .p-8 {
   padding: 2rem;
+}
+.p-2 {
+  padding: 0.5rem;
 }
 .px-1 {
   padding-left: 0.25rem;
@@ -1000,6 +1043,9 @@ video {
 .font-mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
+.font-serif {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
 .text-4xl {
   font-size: 2.25rem;
   line-height: 2.5rem;
@@ -1015,6 +1061,10 @@ video {
 .text-xs {
   font-size: 0.75rem;
   line-height: 1rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
 }
 .font-bold {
   font-weight: 700;
@@ -1092,6 +1142,11 @@ video {
   --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
+.shadow-md {
+  --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
 .filter {
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
@@ -1116,6 +1171,11 @@ video {
   background-color: rgb(249 250 251 / var(--tw-bg-opacity, 1));
 }
 
+.hover\:bg-gray-200:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(229 231 235 / var(--tw-bg-opacity, 1));
+}
+
 .hover\:text-gray-600:hover {
   --tw-text-opacity: 1;
   color: rgb(75 85 99 / var(--tw-text-opacity, 1));
@@ -1130,6 +1190,11 @@ video {
   border-color: transparent;
 }
 
+.focus\:outline-none:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
 .focus\:ring-2:focus {
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
@@ -1141,10 +1206,31 @@ video {
   --tw-ring-color: rgb(59 130 246 / var(--tw-ring-opacity, 1));
 }
 
+.focus\:ring-blue-500:focus {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(59 130 246 / var(--tw-ring-opacity, 1));
+}
+
+.disabled\:cursor-not-allowed:disabled {
+  cursor: not-allowed;
+}
+
+.disabled\:opacity-50:disabled {
+  opacity: 0.5;
+}
+
 @media (min-width: 1024px) {
+
+  .lg\:w-1\/2 {
+    width: 50%;
+  }
 
   .lg\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lg\:flex-row {
+    flex-direction: row;
   }
 }
 
