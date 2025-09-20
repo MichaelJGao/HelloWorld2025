@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Eye, EyeOff, Download, Search, BookOpen, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react'
+import { Eye, EyeOff, Download, Search, BookOpen, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Move } from 'lucide-react'
 import KeywordTooltip from './KeywordTooltip'
 import * as pdfjsLib from 'pdfjs-dist'
 
@@ -32,8 +32,16 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
   const [currentZoomedPage, setCurrentZoomedPage] = useState<string | null>(null)
   const [selectedTextFromPdf, setSelectedTextFromPdf] = useState<string | null>(null)
   const [highlightedTextId, setHighlightedTextId] = useState<string | null>(null)
+  // PDF.js viewer state
+  const [isPanning, setIsPanning] = useState(false)
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
+  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [highlightedText, setHighlightedText] = useState<string>('')
+  
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const textViewRef = useRef<HTMLDivElement>(null)
+  const pdfContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setFilteredText(extractedText)
@@ -55,13 +63,6 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
   }, [file])
 
   // Initialize zoomed page when PDF loads
-  useEffect(() => {
-    if (pdfDocument && currentPage && zoom === 1.0) {
-      renderPageAtZoom(currentPage, zoom).then(zoomedPage => {
-        setCurrentZoomedPage(zoomedPage)
-      })
-    }
-  }, [pdfDocument, currentPage])
 
 
   const loadPdfDocument = async (pdfFile: File) => {
@@ -119,15 +120,17 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
     setPdfPages(pages)
   }
 
-  const renderPageAtZoom = async (pageNum: number, zoomLevel: number) => {
-    if (!pdfDocument) return null
-    
+  const renderPage = useCallback(async (pageNum: number) => {
+    if (!pdfDocument || !canvasRef.current) return
+
     try {
       const page = await pdfDocument.getPage(pageNum)
-      const viewport = page.getViewport({ scale: 1.5 * zoomLevel })
-      const canvas = document.createElement('canvas')
-      const context = canvas.getContext('2d')!
+      const canvas = canvasRef.current
+      const context = canvas.getContext('2d')
       
+      if (!context) return
+
+      const viewport = page.getViewport({ scale: zoom })
       canvas.height = viewport.height
       canvas.width = viewport.width
 
@@ -135,31 +138,63 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
         canvasContext: context,
         viewport: viewport,
       }).promise
-      
-      return canvas.toDataURL()
     } catch (error) {
-      console.error(`Error rendering page ${pageNum} at zoom ${zoomLevel}:`, error)
-      return null
+      console.error('Error rendering page:', error)
     }
-  }
+  }, [pdfDocument, zoom])
 
-  const goToPage = async (pageNum: number) => {
+  // Re-render when page or zoom changes
+  useEffect(() => {
+    if (pdfDocument && currentPage) {
+      renderPage(currentPage)
+    }
+  }, [pdfDocument, currentPage, renderPage])
+
+  const goToPage = (pageNum: number) => {
     if (pageNum >= 1 && pageNum <= totalPages) {
       setCurrentPage(pageNum)
-      // Re-render page at current zoom level
-      if (pdfDocument) {
-        const zoomedPage = await renderPageAtZoom(pageNum, zoom)
-        setCurrentZoomedPage(zoomedPage)
-      }
     }
   }
 
-  const handleZoom = async (newZoom: number) => {
+  const handleZoom = (newZoom: number) => {
     setZoom(newZoom)
-    // Re-render current page at new zoom level
-    if (pdfDocument && currentPage) {
-      const zoomedPage = await renderPageAtZoom(currentPage, newZoom)
-      setCurrentZoomedPage(zoomedPage)
+    // Reset pan offset when zooming
+    setPanOffset({ x: 0, y: 0 })
+  }
+
+  // Panning functionality
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button === 1 || (e.button === 0 && e.ctrlKey)) { // Middle mouse or Ctrl+left click
+      setIsPanning(true)
+      setLastPanPoint({ x: e.clientX, y: e.clientY })
+      e.preventDefault()
+    }
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isPanning) {
+      const deltaX = e.clientX - lastPanPoint.x
+      const deltaY = e.clientY - lastPanPoint.y
+      
+      setPanOffset(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }))
+      
+      setLastPanPoint({ x: e.clientX, y: e.clientY })
+    }
+  }
+
+  const handleMouseUp = () => {
+    setIsPanning(false)
+  }
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey) {
+      e.preventDefault()
+      const delta = e.deltaY > 0 ? -0.1 : 0.1
+      const newZoom = Math.max(0.5, Math.min(3, zoom + delta))
+      handleZoom(newZoom)
     }
   }
 
@@ -182,8 +217,7 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
     const selection = window.getSelection()
     if (selection && selection.toString().length > 0) {
       const text = selection.toString().trim()
-      // Get enhanced context around the selected text
-      const enhancedContext = getEnhancedContext(text, extractedText, 150)
+      setHighlightedText(text)
       setSelectedText(text)
       setHoveredKeyword(null)
       const range = selection.getRangeAt(0)
@@ -453,109 +487,85 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
           </div>
           
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Zoom:</span>
-            <button
-              onClick={() => handleZoom(0.5)}
-              className={`px-2 py-1 text-xs rounded ${zoom === 0.5 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            >
-              50%
-            </button>
-            <button
-              onClick={() => handleZoom(1.0)}
-              className={`px-2 py-1 text-xs rounded ${zoom === 1.0 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            >
-              100%
-            </button>
-            <button
-              onClick={() => handleZoom(1.5)}
-              className={`px-2 py-1 text-xs rounded ${zoom === 1.5 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            >
-              150%
-            </button>
-            <button
-              onClick={() => handleZoom(2.0)}
-              className={`px-2 py-1 text-xs rounded ${zoom === 2.0 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            >
-              200%
-            </button>
+            <span className="text-sm text-gray-600">Use Ctrl+Scroll to zoom, Ctrl+Click to pan</span>
           </div>
         </div>
 
-        {/* Helpful message */}
-        <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-700">
-            💡 <strong>Tip:</strong> Select text on the PDF to automatically jump to it in the Text View. Use Text View for keyword definitions and search.
-          </p>
-          <div className="mt-2 flex gap-2">
-            <button
-              onClick={() => {
-                const testText = "research"
-                console.log('Testing with text:', testText)
-                findAndHighlightTextInTextView(testText)
-              }}
-              className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-            >
-              Test: Find "research"
-            </button>
-            <button
-              onClick={() => {
-                console.log('Current extracted text length:', extractedText.length)
-                console.log('First 500 chars:', extractedText.substring(0, 500))
-                console.log('Text view ref exists:', !!textViewRef.current)
-                if (textViewRef.current) {
-                  console.log('Text view content length:', textViewRef.current.textContent?.length)
-                }
-              }}
-              className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
-            >
-              Debug Info
-            </button>
+        {/* Highlighted Text Display */}
+        {highlightedText && (
+          <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
+            <span className="text-yellow-800 font-medium">Highlighted: </span>
+            <span className="text-yellow-700">{highlightedText}</span>
           </div>
-        </div>
+        )}
+
 
         {isLoading ? (
           <div className="text-center py-12 text-gray-500">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <p>Loading PDF...</p>
           </div>
-        ) : showPdfView && (currentZoomedPage || pdfPages.length > 0) ? (
-          <div className="border border-gray-200 shadow-sm bg-white overflow-auto max-h-[70vh]">
-            <div className="relative">
-              <img
-                src={currentZoomedPage || pdfPages[currentPage - 1]}
-                alt={`Page ${currentPage}`}
-                className="w-full h-auto"
-                style={{ display: 'block' }}
-              />
-              {/* Simple text overlay for selection only - no keyword highlighting */}
-              <div
-                className="absolute inset-0 pointer-events-auto cursor-text"
-                style={{ 
-                  userSelect: 'text',
-                  color: 'transparent',
-                  fontSize: '11px',
-                  lineHeight: '1.2',
-                  fontFamily: 'serif',
-                  padding: '20px',
-                  wordSpacing: '0.1em',
-                  letterSpacing: '0.02em'
-                }}
-                onMouseUp={handlePdfTextSelection}
+        ) : showPdfView ? (
+          <div 
+            ref={pdfContainerRef}
+            className="relative border border-gray-200 shadow-sm bg-white overflow-hidden max-h-[70vh]"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onWheel={handleWheel}
+            style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+          >
+            {/* PDF Controls Overlay */}
+            <div className="absolute top-2 right-2 z-10 flex gap-1">
+              <button
+                onClick={() => handleZoom(Math.max(0.5, zoom - 0.25))}
+                className="p-1 bg-white bg-opacity-90 rounded shadow-sm hover:bg-opacity-100 transition-all"
+                title="Zoom Out"
               >
-                <div
-                  className="h-full overflow-hidden"
-                  style={{
-                    fontSize: '11px',
-                    lineHeight: '1.2',
-                    fontFamily: 'serif',
-                    wordSpacing: '0.1em',
-                    letterSpacing: '0.02em',
-                    whiteSpace: 'pre-wrap'
-                  }}
-                >
-                  {(extractedText.split('\n\n')[currentPage - 1] || extractedText).replace(/\n/g, '\n')}
-                </div>
+                <ZoomOut className="h-4 w-4" />
+              </button>
+              <span className="px-2 py-1 bg-white bg-opacity-90 rounded shadow-sm text-xs font-medium">
+                {Math.round(zoom * 100)}%
+              </span>
+              <button
+                onClick={() => handleZoom(Math.min(3, zoom + 0.25))}
+                className="p-1 bg-white bg-opacity-90 rounded shadow-sm hover:bg-opacity-100 transition-all"
+                title="Zoom In"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => {
+                  setZoom(1)
+                  setPanOffset({ x: 0, y: 0 })
+                }}
+                className="p-1 bg-white bg-opacity-90 rounded shadow-sm hover:bg-opacity-100 transition-all"
+                title="Reset View"
+              >
+                <Move className="h-4 w-4" />
+              </button>
+            </div>
+            
+            {/* Pan indicator */}
+            {isPanning && (
+              <div className="absolute bottom-2 left-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs">
+                Panning...
               </div>
+            )}
+            
+            {/* Canvas container with pan offset */}
+            <div 
+              className="flex justify-center items-center min-h-[400px]"
+              style={{
+                transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
+                transition: isPanning ? 'none' : 'transform 0.1s ease-out'
+              }}
+            >
+              <canvas
+                ref={canvasRef}
+                className="border border-gray-300 shadow-sm"
+                onMouseUp={handleTextSelection}
+              />
             </div>
           </div>
         ) : (
@@ -639,7 +649,7 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
         <KeywordTooltip
           position={tooltipPosition}
           keyword={hoveredKeyword}
-          selectedText={selectedText}
+          selectedText={selectedText || undefined}
           onClose={() => setShowTooltip(false)}
         />
       )}
