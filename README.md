@@ -8,8 +8,11 @@ A modern web application that analyzes PDF documents to extract and explain keyw
 - **Text Extraction**: Automatic text extraction from PDF documents
 - **Keyword Detection**: Intelligent detection of technical terms, acronyms, and jargon
 - **Hover Tooltips**: Wikipedia-style summaries with hover interactions
+- **Image Search**: Relevant images for keywords using Wikipedia API
 - **Manual Highlighting**: Select any text to get instant definitions
 - **Context-Aware**: Summaries consider document context before searching online
+- **PDF View**: Original PDF display with zoom and navigation
+- **Text Sync**: Select text on PDF to jump to it in the text view
 - **Modern UI**: Beautiful, responsive design with smooth animations
 
 ## Tech Stack
@@ -65,17 +68,22 @@ A modern web application that analyzes PDF documents to extract and explain keyw
 ## API Endpoints
 
 - `POST /api/generate-summary`: Generates keyword summaries using OpenAI
+- `POST /api/search-image`: Searches for relevant images using Wikipedia API
+- `POST /api/detect-keywords`: AI-powered keyword detection from document text
 
 ## Project Structure
 
 ```
 ├── app/
-│   ├── api/generate-summary/    # API route for summary generation
+│   ├── api/
+│   │   ├── generate-summary/    # API route for summary generation
+│   │   ├── search-image/        # API route for image search
+│   │   └── detect-keywords/     # API route for AI keyword detection
 │   ├── globals.css              # Global styles
 │   ├── layout.tsx               # Root layout
 │   └── page.tsx                 # Main page
 ├── components/
-│   ├── PDFViewer.tsx            # PDF display and interaction
+│   ├── PDFDisplay.tsx           # PDF display and interaction
 │   └── KeywordTooltip.tsx       # Hover tooltip component
 ├── lib/
 │   ├── pdfProcessor.ts          # PDF text extraction

@@ -44,13 +44,45 @@ Document context: "${context}"`
                temperature: 0.2,
              })
 
-      const summary = completion.choices[0]?.message?.content || 'No summary available.'
-      const imageUrl = '' // Skip image generation for now
+             const summary = completion.choices[0]?.message?.content || 'No summary available.'
+             
+             // Search for an image related to the term
+             let imageUrl = ''
+             let imageAlt = ''
+             let source = ''
+             let wikipediaUrl = ''
+             let description = ''
+             
+             try {
+               const imageResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/search-image`, {
+                 method: 'POST',
+                 headers: {
+                   'Content-Type': 'application/json',
+                 },
+                 body: JSON.stringify({ term, context }),
+               })
+               
+               if (imageResponse.ok) {
+                 const imageData = await imageResponse.json()
+                 imageUrl = imageData.imageUrl || ''
+                 imageAlt = imageData.imageAlt || ''
+                 source = imageData.source || ''
+                 wikipediaUrl = imageData.wikipediaUrl || ''
+                 description = imageData.description || ''
+               }
+             } catch (imageError) {
+               console.error('Error fetching image:', imageError)
+               // Continue without image
+             }
 
-      return NextResponse.json({
-        summary,
-        imageUrl
-      })
+             return NextResponse.json({
+               summary,
+               imageUrl,
+               imageAlt,
+               source,
+               wikipediaUrl,
+               description
+             })
 
     } catch (apiError: any) {
       console.error('OpenAI API Error:', apiError)
@@ -58,9 +90,42 @@ Document context: "${context}"`
       // Provide fallback summary based on common knowledge
       const fallbackSummary = generateFallbackSummary(term, context, searchOnline)
       
+      // Try to get an image even for fallback summaries
+      let imageUrl = ''
+      let imageAlt = ''
+      let source = ''
+      let wikipediaUrl = ''
+      let description = ''
+      
+      try {
+        const imageResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/search-image`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ term, context }),
+        })
+        
+        if (imageResponse.ok) {
+          const imageData = await imageResponse.json()
+          imageUrl = imageData.imageUrl || ''
+          imageAlt = imageData.imageAlt || ''
+          source = imageData.source || ''
+          wikipediaUrl = imageData.wikipediaUrl || ''
+          description = imageData.description || ''
+        }
+      } catch (imageError) {
+        console.error('Error fetching image for fallback:', imageError)
+        // Continue without image
+      }
+      
       return NextResponse.json({
         summary: fallbackSummary,
-        imageUrl: '',
+        imageUrl,
+        imageAlt,
+        source,
+        wikipediaUrl,
+        description,
         fallback: true
       })
     }

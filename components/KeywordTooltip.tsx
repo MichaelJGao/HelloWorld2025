@@ -16,6 +16,10 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
   const [isLoading, setIsLoading] = useState(false)
   const [summary, setSummary] = useState<string>('')
   const [imageUrl, setImageUrl] = useState<string>('')
+  const [imageAlt, setImageAlt] = useState<string>('')
+  const [source, setSource] = useState<string>('')
+  const [wikipediaUrl, setWikipediaUrl] = useState<string>('')
+  const [description, setDescription] = useState<string>('')
   const [error, setError] = useState<string>('')
   const [isFallback, setIsFallback] = useState<boolean>(false)
 
@@ -56,6 +60,10 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
         const data = await response.json()
         definition = data.summary
         setImageUrl(data.imageUrl || '')
+        setImageAlt(data.imageAlt || '')
+        setSource(data.source || '')
+        setWikipediaUrl(data.wikipediaUrl || '')
+        setDescription(data.description || '')
         
         // Show fallback indicator if using fallback summary
         if (data.fallback) {
@@ -132,15 +140,40 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
         ) : (
           <div className="space-y-3">
             {imageUrl && (
-              <div className="w-full h-32 bg-gray-100 rounded-md overflow-hidden">
+              <div className="w-full bg-gray-100 rounded-md overflow-hidden">
                 <img
                   src={imageUrl}
-                  alt={keyword?.word || selectedText}
-                  className="w-full h-full object-cover"
+                  alt={imageAlt || keyword?.word || selectedText}
+                  className="w-full h-32 object-cover"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none'
                   }}
                 />
+                {source && (
+                  <div className="p-2 bg-gray-50 border-t border-gray-200">
+                    <div className="flex items-center justify-between text-xs text-gray-600">
+                      <span>
+                        {source === 'Wikipedia' ? '📖 Wikipedia' : `📷 ${source}`}
+                      </span>
+                      {wikipediaUrl && (
+                        <a
+                          href={wikipediaUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          View Article
+                        </a>
+                      )}
+                    </div>
+                    {description && (
+                      <div className="mt-1 text-xs text-gray-500 line-clamp-2">
+                        {description.substring(0, 100)}...
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             
