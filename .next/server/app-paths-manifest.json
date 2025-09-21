@@ -1,10 +1,9 @@
 {
+  "/not-found": "app/not-found.js",
   "/page": "app/page.js",
-  "/auth/signin/page": "app/auth/signin/page.js",
+  "/settings/page": "app/settings/page.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
   "/api/detect-keywords/route": "app/api/detect-keywords/route.js",
   "/api/chat/route": "app/api/chat/route.js",
-  "/api/documents/route": "app/api/documents/route.js",
-  "/api/generate-summary/route": "app/api/generate-summary/route.js",
-  "/api/search-image/route": "app/api/search-image/route.js"
+  "/api/documents/route": "app/api/documents/route.js"
 }

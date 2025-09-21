@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
-import { User, Settings, LogOut, ChevronDown, Users, FileText } from 'lucide-react'
+import { User, Settings, LogOut, ChevronDown, Users } from 'lucide-react'
 
 export default function UserMenu() {
   const { data: session } = useSession()
@@ -78,18 +78,7 @@ export default function UserMenu() {
             <button
               onClick={() => {
                 setIsOpen(false)
-                // Navigate to documents
-              }}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <FileText className="h-4 w-4 mr-3" />
-              My Documents
-            </button>
-            
-            <button
-              onClick={() => {
-                setIsOpen(false)
-                // Navigate to settings
+                window.location.href = '/settings'
               }}
               className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
