@@ -7,17 +7,13 @@ export async function GET(
   { params }: { params: { token: string } }
 ) {
   try {
-    const token = params.token
     const db = await getDatabase()
-    const invites = db.collection('documentInvites')
-    const documents = db.collection('documents')
-    const users = db.collection('users')
-
-    // Find the invite by token
-    const invite = await invites.findOne({ 
-      token,
+    
+    // Find the invitation
+    const invite = await db.collection('invitations').findOne({
+      token: params.token,
       isUsed: false,
-      expiresAt: { $gt: new Date() }
+      expiresAt: { $gt: new Date().toISOString() }
     })
 
     if (!invite) {
@@ -27,8 +23,8 @@ export async function GET(
       )
     }
 
-    // Find the document
-    const document = await documents.findOne({ 
+    // Get the document
+    const document = await db.collection('documents').findOne({
       _id: new ObjectId(invite.documentId)
     })
 
@@ -39,27 +35,10 @@ export async function GET(
       )
     }
 
-    // Find the inviter
-    const inviter = await users.findOne({ 
-      _id: new ObjectId(invite.inviterId)
-    })
-
-    // Mark invite as used
-    await invites.updateOne(
-      { _id: invite._id },
-      { 
-        $set: { 
-          isUsed: true, 
-          usedAt: new Date(),
-          updatedAt: new Date()
-        }
-      }
-    )
-
-    // Update document's last accessed time
-    await documents.updateOne(
+    // Update last accessed
+    await db.collection('documents').updateOne(
       { _id: new ObjectId(invite.documentId) },
-      { $set: { lastAccessed: new Date() } }
+      { $set: { lastAccessed: new Date().toISOString() } }
     )
 
     return NextResponse.json({
@@ -67,8 +46,9 @@ export async function GET(
       document: {
         ...document,
         _id: document._id.toString(),
+        id: document._id.toString(),
         inviter: {
-          name: inviter?.name || invite.inviterName,
+          name: invite.inviterName,
           email: invite.inviterEmail
         },
         invite: {
@@ -78,7 +58,6 @@ export async function GET(
         }
       }
     })
-
   } catch (error) {
     console.error('Error accessing document via invite:', error)
     return NextResponse.json(

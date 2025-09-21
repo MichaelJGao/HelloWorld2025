@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm'
 
 interface KeywordTooltipProps {
   position: { x: number; y: number }
-  keyword?: { word: string; definition: string; context: string } | null
+  keyword?: { word: string; definition: string; context: string; isGPT?: boolean } | null
   selectedText?: string
   onClose: () => void
 }
@@ -23,9 +23,13 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
   const [imageMessage, setImageMessage] = useState<string>('')
   const [error, setError] = useState<string>('')
   const [isFallback, setIsFallback] = useState<boolean>(false)
+  const [isTextSummary, setIsTextSummary] = useState<boolean>(false)
 
   useEffect(() => {
     if (keyword || selectedText) {
+      // Reset flags when switching content
+      setIsFallback(false)
+      setIsTextSummary(false)
       generateSummary()
     }
   }, [keyword, selectedText])
@@ -37,8 +41,36 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
     try {
       const term = keyword?.word || selectedText || ''
       
+      // If we have selected text, prioritize text summary over keyword definition
+      if (selectedText) {
+        console.log('Generating semantic text summary for:', selectedText)
+        const response = await fetch('/api/generate-text-summary', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: selectedText,
+            context: '' // Could add document context here if needed
+          }),
+        })
+        
+        if (!response.ok) {
+          console.error('Text summary API failed:', response.status, response.statusText)
+          throw new Error('Failed to generate text summary')
+        }
+        
+        const data = await response.json()
+        console.log('Text summary response:', data)
+        setSummary(data.summary)
+        setIsTextSummary(true) // This is a text summary (GPT or fallback)
+        setIsFallback(data.fallback || false) // Show fallback indicator if using semantic analysis
+        return
+      }
+      
       // First try to get definition from document context
       let definition = keyword?.definition || ''
+      console.log('Processing keyword:', keyword?.word, 'with definition:', definition)
       
       // If no definition from context, search online
       if (!definition) {
@@ -154,6 +186,11 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
                 Found in document context
               </p>
             )}
+            {selectedText && !keyword && (
+              <p className="text-xs text-gray-500 mt-1">
+                Highlighted text summary
+              </p>
+            )}
           </div>
           <div className="flex items-center space-x-2 ml-4">
             <button
@@ -175,7 +212,9 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 text-primary-500 animate-spin mr-2" />
-            <span className="text-gray-600">Generating summary...</span>
+            <span className="text-gray-600">
+              {selectedText && !keyword ? 'Analyzing highlighted text...' : 'Generating summary...'}
+            </span>
           </div>
         ) : error ? (
           <div className="text-red-600 text-sm py-4">
@@ -255,7 +294,25 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
               </div>
             )}
             
-            {isFallback && (
+            {isTextSummary && (
+              <div className="pt-3 border-t border-gray-100">
+                <div className="flex items-center text-xs text-blue-600">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                  <span>{isFallback ? 'Semantic text analysis' : 'GPT-powered analysis'}</span>
+                </div>
+              </div>
+            )}
+            
+            {keyword?.isGPT && !isTextSummary && (
+              <div className="pt-3 border-t border-gray-100">
+                <div className="flex items-center text-xs text-green-600">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                  <span>GPT-powered definition</span>
+                </div>
+              </div>
+            )}
+            
+            {isFallback && !isTextSummary && !keyword?.isGPT && (
               <div className="pt-3 border-t border-gray-100">
                 <div className="flex items-center text-xs text-amber-600">
                   <div className="w-2 h-2 bg-amber-400 rounded-full mr-2"></div>

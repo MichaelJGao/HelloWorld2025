@@ -3,28 +3,17 @@ import crypto from 'crypto'
 
 // Create a transporter for sending emails
 const createTransporter = () => {
-  // For development, we'll use a test account
-  // In production, you should use a real email service like SendGrid, AWS SES, etc.
-  if (process.env.NODE_ENV === 'development') {
-    return nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.ETHEREAL_USER || 'ethereal.user@ethereal.email',
-        pass: process.env.ETHEREAL_PASS || 'ethereal.pass'
-      }
-    })
-  }
-
-  // Production email configuration
+  // Use Gmail SMTP with your credentials
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
+      user: 'adarshsiva297@gmail.com',
+      pass: 'mcbv pspd thxy pytv'
+    },
+    tls: {
+      rejectUnauthorized: false
     }
   })
 }
@@ -43,9 +32,9 @@ export const sendDocumentInvite = async (data: EmailInviteData): Promise<boolean
     const transporter = createTransporter()
     
     const mailOptions = {
-      from: `"${data.inviterName}" <${data.inviterEmail}>`,
+      from: `"PDF Analyzer" <adarshsiva297@gmail.com>`,
       to: data.inviteeEmail,
-      subject: `You've been invited to view a document: ${data.documentName}`,
+      subject: `📄 Document Invitation: ${data.documentName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
@@ -115,9 +104,8 @@ export const sendDocumentInvite = async (data: EmailInviteData): Promise<boolean
 
     const info = await transporter.sendMail(mailOptions)
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Preview URL: ' + nodemailer.getTestMessageUrl(info))
-    }
+    // Log the preview URL for testing (Ethereal provides this)
+    console.log('Email sent successfully! Preview URL: ' + nodemailer.getTestMessageUrl(info))
     
     return true
   } catch (error) {

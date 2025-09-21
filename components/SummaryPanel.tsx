@@ -19,7 +19,7 @@ interface SummaryData {
 
 interface SummaryPanelProps {
   extractedText: string
-  keywords: Array<{word: string, definition: string, context: string}>
+  keywords: Array<{word: string, definition: string, context: string, isGPT?: boolean}>
   fileName: string
 }
 

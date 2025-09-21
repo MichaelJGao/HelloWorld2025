@@ -1,0 +1,17 @@
+[
+  {
+    "id": "1758444546950",
+    "documentId": "1758444357714",
+    "inviterEmail": "adarshsiva297@gmail.com",
+    "inviterName": "Development User",
+    "inviteeEmail": "siva3@purdue.edu",
+    "inviteeName": "",
+    "message": "",
+    "token": "88db851acaf37bf27cbb2218f15482a2c7a72b70fd78d2d496d836d5896c0846",
+    "expiresAt": "2025-09-28T08:49:06.950Z",
+    "isUsed": true,
+    "createdAt": "2025-09-21T08:49:06.950Z",
+    "updatedAt": "2025-09-21T08:49:23.172Z",
+    "usedAt": "2025-09-21T08:49:23.172Z"
+  }
+]

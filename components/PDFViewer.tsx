@@ -7,7 +7,7 @@ import KeywordTooltip from './KeywordTooltip'
 interface PDFViewerProps {
   file: File
   extractedText: string
-  keywords: Array<{word: string, definition: string, context: string}>
+  keywords: Array<{word: string, definition: string, context: string, isGPT?: boolean}>
 }
 
 export default function PDFViewer({ file, extractedText, keywords }: PDFViewerProps) {
@@ -16,7 +16,7 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
   const [selectedText, setSelectedText] = useState('')
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
   const [showTooltip, setShowTooltip] = useState(false)
-  const [hoveredKeyword, setHoveredKeyword] = useState<{word: string, definition: string, context: string} | null>(null)
+  const [hoveredKeyword, setHoveredKeyword] = useState<{word: string, definition: string, context: string, isGPT?: boolean} | null>(null)
   const textRef = useRef<HTMLDivElement>(null)
 
   // Highlight keywords in the text
@@ -27,10 +27,21 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
     const sortedKeywords = [...keywords].sort((a, b) => b.word.length - a.word.length)
     
     sortedKeywords.forEach(keyword => {
-      const regex = new RegExp(`\\b${keyword.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
-      highlightedText = highlightedText.replace(regex, (match) => {
-        return `<span class="keyword" data-keyword="${keyword.word}">${match}</span>`
-      })
+      // For multi-word phrases, use a more flexible regex
+      if (keyword.word.includes(' ')) {
+        // Escape special regex characters and create a case-insensitive pattern
+        const escapedPhrase = keyword.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const regex = new RegExp(`\\b${escapedPhrase}\\b`, 'gi')
+        highlightedText = highlightedText.replace(regex, (match) => {
+          return `<span class="keyword" data-keyword="${keyword.word}">${match}</span>`
+        })
+      } else {
+        // Single word - use word boundaries
+        const regex = new RegExp(`\\b${keyword.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
+        highlightedText = highlightedText.replace(regex, (match) => {
+          return `<span class="keyword" data-keyword="${keyword.word}">${match}</span>`
+        })
+      }
     })
     
     return highlightedText
@@ -40,7 +51,9 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
   const handleTextSelection = () => {
     const selection = window.getSelection()
     if (selection && selection.toString().trim()) {
-      setSelectedText(selection.toString().trim())
+      const text = selection.toString().trim()
+      setSelectedText(text)
+      setHoveredKeyword(null) // Clear any keyword hover when text is selected
       const range = selection.getRangeAt(0)
       const rect = range.getBoundingClientRect()
       setTooltipPosition({
@@ -48,11 +61,28 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
         y: rect.top - 10
       })
       setShowTooltip(true)
+      
+      // Preserve the text selection by preventing interference
+      setTimeout(() => {
+        const currentSelection = window.getSelection()
+        if (currentSelection && currentSelection.toString() !== text) {
+          // Restore selection if it was cleared
+          try {
+            const newRange = document.createRange()
+            newRange.setStart(range.startContainer, range.startOffset)
+            newRange.setEnd(range.endContainer, range.endOffset)
+            currentSelection.removeAllRanges()
+            currentSelection.addRange(newRange)
+          } catch (error) {
+            console.log('Could not restore selection:', error)
+          }
+        }
+      }, 50)
     }
   }
 
-  // Handle keyword hover
-  const handleKeywordHover = (e: React.MouseEvent) => {
+  // Handle keyword click
+  const handleKeywordClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement
     if (target.classList.contains('keyword')) {
       const word = target.textContent || ''
@@ -69,8 +99,8 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
   }
 
   const handleMouseLeave = () => {
-    setShowTooltip(false)
-    setHoveredKeyword(null)
+    // Don't close tooltip on mouse leave since we're using click instead of hover
+    // Tooltips will only close when manually closed via the X button
   }
 
   // Filter text based on search
@@ -132,7 +162,7 @@ export default function PDFViewer({ file, extractedText, keywords }: PDFViewerPr
               ref={textRef}
               className="prose prose-sm max-w-none text-gray-800 dark:text-gray-200 leading-relaxed"
               onMouseUp={handleTextSelection}
-              onMouseOver={handleKeywordHover}
+              onClick={handleKeywordClick}
               onMouseLeave={handleMouseLeave}
               dangerouslySetInnerHTML={{
                 __html: highlightKeywords(filteredText.replace(/\n/g, '<br>'))

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getDatabase } from '@/lib/mongodb'
-import { Document } from '@/lib/models'
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,30 +12,12 @@ export async function GET(request: NextRequest) {
     }
 
     const db = await getDatabase()
-    const users = db.collection('users')
-    const documents = db.collection('documents')
-
-    // Find or create user
-    let user = await users.findOne({ email: session.user.email })
-    if (!user) {
-      const newUser = {
-        email: session.user.email,
-        name: session.user.name || '',
-        image: session.user.image || '',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      const result = await users.insertOne(newUser)
-      user = { _id: result.insertedId, ...newUser }
-    }
-
-    // Get user's documents
-    const userDocuments = await documents
-      .find({ userId: user._id })
+    const documents = await db.collection('documents')
+      .find({ userEmail: session.user.email })
       .sort({ uploadDate: -1 })
       .toArray()
 
-    return NextResponse.json({ documents: userDocuments })
+    return NextResponse.json({ documents })
   } catch (error) {
     console.error('Error fetching documents:', error)
     return NextResponse.json(
@@ -57,58 +38,32 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { fileName, originalName, fileSize, fileType, extractedText, keywords, summary } = body
 
-    if (!fileName || !extractedText) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
-
     const db = await getDatabase()
-    const users = db.collection('users')
-    const documents = db.collection('documents')
-
-    // Find or create user
-    let user = await users.findOne({ email: session.user.email })
-    if (!user) {
-      const newUser = {
-        email: session.user.email,
-        name: session.user.name || '',
-        image: session.user.image || '',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      const result = await users.insertOne(newUser)
-      user = { _id: result.insertedId, ...newUser }
-    }
-
-    // Create document
-    const document: Omit<Document, '_id'> = {
-      userId: user._id,
+    const document = {
+      userEmail: session.user.email,
+      userName: session.user.name || 'User',
       fileName,
-      originalName: originalName || fileName,
-      fileSize: fileSize || 0,
-      fileType: fileType || 'application/pdf',
+      originalName,
+      fileSize,
+      fileType,
       extractedText,
       keywords: keywords || [],
-      summary,
-      uploadDate: new Date(),
-      lastAccessed: new Date(),
+      summary: summary || null,
+      uploadDate: new Date().toISOString(),
+      lastAccessed: new Date().toISOString(),
       isPublic: false,
       tags: []
     }
 
-    const result = await documents.insertOne(document)
+    const result = await db.collection('documents').insertOne(document)
     
     return NextResponse.json({ 
-      success: true, 
-      documentId: result.insertedId,
-      message: 'Document saved successfully'
+      document: { ...document, _id: result.insertedId, id: result.insertedId.toString() }
     })
   } catch (error) {
-    console.error('Error saving document:', error)
+    console.error('Error creating document:', error)
     return NextResponse.json(
-      { error: 'Failed to save document' },
+      { error: 'Failed to create document' },
       { status: 500 }
     )
   }

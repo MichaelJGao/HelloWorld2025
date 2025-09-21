@@ -1,10 +1,6 @@
 import { MongoClient, Db } from 'mongodb'
 
-if (!process.env.MONGODB_URI || process.env.MONGODB_URI.includes('your_mongodb_connection_string_here') || process.env.MONGODB_URI.includes('username:password')) {
-  throw new Error('Please add your MongoDB URI to .env.local. See MONGODB_SETUP.md for instructions.')
-}
-
-const uri = process.env.MONGODB_URI
+const uri = process.env.MONGODB_URI || 'mongodb+srv://a:123@cluster0.lipbze4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 const options = {}
 
 let client: MongoClient

@@ -5,15 +5,18 @@ import React, { useState } from 'react'
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye, MessageCircle, History, Save } from 'lucide-react'
+import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye, MessageCircle, History, Save, Network } from 'lucide-react'
 import PDFDisplay from '@/components/PDFDisplay'
 import SummaryPanel from '@/components/SummaryPanel'
+import ConceptMap from '@/components/ConceptMap'
 import LandingPage from '@/components/LandingPage'
 import ThemeToggle from '@/components/ThemeToggle'
 import ChatBot from '@/components/ChatBot'
 import LoginButton from '@/components/LoginButton'
 import UserMenu from '@/components/UserMenu'
 import DocumentHistory from '@/components/DocumentHistory'
+import DocumentAnnotations from '@/components/DocumentAnnotations'
+import UnifiedAnnotations from '@/components/UnifiedAnnotations'
 import { extractTextFromPDF } from '@/lib/pdfProcessor'
 import { detectKeywords } from '@/lib/keywordDetector'
 import { useSession } from 'next-auth/react'
@@ -25,11 +28,13 @@ export default function Home() {
   const [keywords, setKeywords] = useState<Array<{word: string, definition: string, context: string}>>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string>('')
-  const [activeTab, setActiveTab] = useState<'viewer' | 'summary' | 'chat' | 'history'>('viewer')
+  const [activeTab, setActiveTab] = useState<'viewer' | 'summary' | 'concept' | 'chat' | 'history'>('viewer')
   const [showLandingPage, setShowLandingPage] = useState(true)
   const [showChatBot, setShowChatBot] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  const [savedDocumentId, setSavedDocumentId] = useState<string | null>(null)
+  const [annotationCount, setAnnotationCount] = useState(0)
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -110,6 +115,8 @@ export default function Home() {
       })
 
       if (response.ok) {
+        const data = await response.json()
+        setSavedDocumentId(data.document._id)
         setSaveMessage('Document saved successfully!')
         setTimeout(() => setSaveMessage(''), 3000)
       } else {
@@ -353,6 +360,17 @@ export default function Home() {
                              Summary
                            </button>
                            <button
+                             onClick={() => setActiveTab('concept')}
+                             className={`flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-300 ${
+                               activeTab === 'concept'
+                                 ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-md transform scale-105'
+                                 : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-600/50'
+                             }`}
+                           >
+                             <Network className="h-4 w-4 mr-2" />
+                             Concept Map
+                           </button>
+                           <button
                              onClick={() => setActiveTab('chat')}
                              className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
                                activeTab === 'chat'
@@ -397,11 +415,13 @@ export default function Home() {
                 </div>
                 
                 {activeTab === 'viewer' ? (
-                  <PDFDisplay 
-                    file={pdfFile} 
-                    extractedText={extractedText}
-                    keywords={keywords}
-                  />
+                  <div className="space-y-6">
+                    <PDFDisplay 
+                      file={pdfFile} 
+                      extractedText={extractedText}
+                      keywords={keywords}
+                    />
+                  </div>
                 ) : activeTab === 'summary' ? (
                   <>
                     {console.log('SummaryPanel props:', {
@@ -415,10 +435,26 @@ export default function Home() {
                       fileName={pdfFile.name}
                     />
                   </>
-                       ) : activeTab === 'history' ? (
-                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
-                           <DocumentHistory />
-                         </div>
+                ) : activeTab === 'concept' ? (
+                  <ConceptMap
+                    extractedText={extractedText}
+                    keywords={keywords}
+                    fileName={pdfFile?.name || 'Document'}
+                  />
+                 ) : activeTab === 'history' ? (
+                          <div className="space-y-6">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
+                              <DocumentHistory />
+                            </div>
+                            {savedDocumentId && (
+                              <UnifiedAnnotations 
+                                documentId={savedDocumentId}
+                                documentText={extractedText}
+                                isOwner={true}
+                                onAnnotationAdd={() => setAnnotationCount(prev => prev + 1)}
+                              />
+                            )}
+                          </div>
                        ) : (
                          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
                            <div className="text-center py-12">

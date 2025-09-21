@@ -16,19 +16,9 @@ export async function GET(
     }
 
     const db = await getDatabase()
-    const users = db.collection('users')
-    const documents = db.collection('documents')
-
-    // Find user
-    const user = await users.findOne({ email: session.user.email })
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Get document
-    const document = await documents.findOne({
+    const document = await db.collection('documents').findOne({
       _id: new ObjectId(params.id),
-      userId: user._id
+      userEmail: session.user.email
     })
 
     if (!document) {
@@ -36,12 +26,18 @@ export async function GET(
     }
 
     // Update last accessed
-    await documents.updateOne(
+    await db.collection('documents').updateOne(
       { _id: new ObjectId(params.id) },
-      { $set: { lastAccessed: new Date() } }
+      { $set: { lastAccessed: new Date().toISOString() } }
     )
 
-    return NextResponse.json({ document })
+    return NextResponse.json({ 
+      document: {
+        ...document,
+        _id: document._id.toString(),
+        id: document._id.toString()
+      }
+    })
   } catch (error) {
     console.error('Error fetching document:', error)
     return NextResponse.json(
@@ -63,40 +59,21 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { tags, isPublic, summary } = body
-
     const db = await getDatabase()
-    const users = db.collection('users')
-    const documents = db.collection('documents')
 
-    // Find user
-    const user = await users.findOne({ email: session.user.email })
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Update document
-    const updateData: any = { updatedAt: new Date() }
-    if (tags !== undefined) updateData.tags = tags
-    if (isPublic !== undefined) updateData.isPublic = isPublic
-    if (summary !== undefined) updateData.summary = summary
-
-    const result = await documents.updateOne(
+    const result = await db.collection('documents').updateOne(
       { 
         _id: new ObjectId(params.id),
-        userId: user._id
+        userEmail: session.user.email 
       },
-      { $set: updateData }
+      { $set: { ...body, lastModified: new Date().toISOString() } }
     )
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ 
-      success: true,
-      message: 'Document updated successfully'
-    })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error updating document:', error)
     return NextResponse.json(
@@ -118,29 +95,16 @@ export async function DELETE(
     }
 
     const db = await getDatabase()
-    const users = db.collection('users')
-    const documents = db.collection('documents')
-
-    // Find user
-    const user = await users.findOne({ email: session.user.email })
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Delete document
-    const result = await documents.deleteOne({
+    const result = await db.collection('documents').deleteOne({
       _id: new ObjectId(params.id),
-      userId: user._id
+      userEmail: session.user.email
     })
 
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ 
-      success: true,
-      message: 'Document deleted successfully'
-    })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting document:', error)
     return NextResponse.json(

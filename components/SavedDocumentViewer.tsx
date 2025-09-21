@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Eye, EyeOff, Download, Search, X, FileText, Save, MessageSquare, Share2 } from 'lucide-react'
+import { Eye, EyeOff, Download, Search, X, FileText, Save, MessageSquare, Share2, User, Clock, Reply, Edit2, Trash2 } from 'lucide-react'
 import KeywordTooltip from './KeywordTooltip'
 import AnnotationToolbar from './AnnotationToolbar'
 import AnnotationDisplay from './AnnotationDisplay'
@@ -39,16 +39,28 @@ interface SavedDocument {
 
 interface Annotation {
   _id: string
-  type: 'highlight' | 'note'
+  text: string
   selectedText: string
-  note?: string
-  color?: string
   position: {
     startIndex: number
     endIndex: number
     startOffset: number
     endOffset: number
   }
+  type: 'comment' | 'highlight' | 'question' | 'suggestion'
+  authorEmail: string
+  authorName: string
+  createdAt: string
+  updatedAt: string
+  replies: Reply[]
+  inviterEmail?: string
+}
+
+interface Reply {
+  _id: string
+  text: string
+  authorEmail: string
+  authorName: string
   createdAt: string
   updatedAt: string
 }
@@ -64,7 +76,7 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
   const [selectedText, setSelectedText] = useState('')
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
   const [showTooltip, setShowTooltip] = useState(false)
-  const [hoveredKeyword, setHoveredKeyword] = useState<{word: string, definition: string, context: string} | null>(null)
+  const [hoveredKeyword, setHoveredKeyword] = useState<{word: string, definition: string, context: string, isGPT?: boolean} | null>(null)
   const [annotations, setAnnotations] = useState<Annotation[]>([])
   const [showAnnotationToolbar, setShowAnnotationToolbar] = useState(false)
   const [annotationToolbarPosition, setAnnotationToolbarPosition] = useState({ x: 0, y: 0 })
@@ -85,7 +97,6 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
       const response = await fetch(`/api/documents/${document._id}/annotations`)
       if (response.ok) {
         const data = await response.json()
-        console.log('Loaded annotations:', data.annotations)
         setAnnotations(data.annotations || [])
       } else {
         console.error('Failed to load annotations:', response.status)
@@ -95,8 +106,8 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
     }
   }
 
-  // Save annotation
-  const saveAnnotation = async (note: string, color: string) => {
+  // Save annotation as comment
+  const saveAnnotation = async (comment: string, color: string) => {
     if (!selectedText.trim()) return
 
     try {
@@ -114,10 +125,9 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
       const endIndex = startIndex + selectedText.length
 
       const annotationData = {
-        type: note ? 'note' : 'highlight',
+        text: comment || '', // Use 'text' field for comment content
         selectedText: selectedText.trim(),
-        note: note || '',
-        color,
+        type: comment ? 'comment' : 'highlight',
         position: {
           startIndex,
           endIndex,
@@ -135,16 +145,16 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
       })
 
       if (response.ok) {
-        console.log('Annotation saved successfully')
+        console.log('Comment saved successfully')
         await loadAnnotations() // Reload annotations
         setShowAnnotationToolbar(false)
         setSelectedText('')
         selection.removeAllRanges()
       } else {
-        console.error('Failed to save annotation:', response.status)
+        console.error('Failed to save comment:', response.status)
       }
     } catch (error) {
-      console.error('Error saving annotation:', error)
+      console.error('Error saving comment:', error)
     } finally {
       setLoading(false)
     }
@@ -209,23 +219,47 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
     const sortedKeywords = [...document.keywords].sort((a, b) => b.word.length - a.word.length)
     
     sortedKeywords.forEach(keyword => {
-      const regex = new RegExp(`\\b${keyword.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
-      highlightedText = highlightedText.replace(regex, (match, offset) => {
-        // Check if this match is already inside an annotation span
-        const beforeMatch = highlightedText.substring(0, offset)
-        const afterMatch = highlightedText.substring(offset + match.length)
-        
-        // Count annotation spans before this position
-        const openAnnotations = (beforeMatch.match(/<span class="annotation"/g) || []).length
-        const closeAnnotations = (beforeMatch.match(/<\/span>/g) || []).length
-        
-        // If we're inside an annotation, don't highlight
-        if (openAnnotations > closeAnnotations) {
-          return match
-        }
-        
-        return `<span class="keyword" data-keyword="${keyword.word}">${match}</span>`
-      })
+      // For multi-word phrases, use a more flexible regex
+      if (keyword.word.includes(' ')) {
+        // Escape special regex characters and create a case-insensitive pattern
+        const escapedPhrase = keyword.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const regex = new RegExp(`\\b${escapedPhrase}\\b`, 'gi')
+        highlightedText = highlightedText.replace(regex, (match, offset) => {
+          // Check if this match is already inside an annotation span
+          const beforeMatch = highlightedText.substring(0, offset)
+          const afterMatch = highlightedText.substring(offset + match.length)
+          
+          // Count annotation spans before this position
+          const openAnnotations = (beforeMatch.match(/<span class="annotation"/g) || []).length
+          const closeAnnotations = (beforeMatch.match(/<\/span>/g) || []).length
+          
+          // If we're inside an annotation, don't highlight
+          if (openAnnotations > closeAnnotations) {
+            return match
+          }
+          
+          return `<span class="keyword" data-keyword="${keyword.word}">${match}</span>`
+        })
+      } else {
+        // Single word - use word boundaries
+        const regex = new RegExp(`\\b${keyword.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
+        highlightedText = highlightedText.replace(regex, (match, offset) => {
+          // Check if this match is already inside an annotation span
+          const beforeMatch = highlightedText.substring(0, offset)
+          const afterMatch = highlightedText.substring(offset + match.length)
+          
+          // Count annotation spans before this position
+          const openAnnotations = (beforeMatch.match(/<span class="annotation"/g) || []).length
+          const closeAnnotations = (beforeMatch.match(/<\/span>/g) || []).length
+          
+          // If we're inside an annotation, don't highlight
+          if (openAnnotations > closeAnnotations) {
+            return match
+          }
+          
+          return `<span class="keyword" data-keyword="${keyword.word}">${match}</span>`
+        })
+      }
     })
     
     return highlightedText
@@ -267,8 +301,8 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
     }
   }
 
-  // Handle keyword hover
-  const handleKeywordHover = (e: React.MouseEvent) => {
+  // Handle keyword click
+  const handleKeywordClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement
     if (target.classList.contains('keyword')) {
       const word = target.textContent || ''
@@ -282,6 +316,12 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
         setShowTooltip(true)
       }
     }
+  }
+
+  // Handle combined click events (keywords and annotations)
+  const handleCombinedClick = (e: React.MouseEvent) => {
+    handleKeywordClick(e)
+    handleAnnotationClick(e)
   }
 
   // Handle annotation click
@@ -330,6 +370,17 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'comment': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      case 'highlight': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+      case 'question': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+      case 'suggestion': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      case 'note': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+    }
   }
 
   return (
@@ -452,26 +503,76 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
                   </div>
                 )}
 
-                {/* Annotations Debug */}
+                {/* Comments Section */}
                 {annotations.length > 0 && (
-                  <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-6">
-                    <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-2">
-                      Your Annotations ({annotations.length})
+                  <div className="mb-6 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      Comments ({annotations.length})
                     </h3>
-                    <div className="space-y-2">
-                      {annotations.map((annotation, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-purple-100 dark:bg-purple-800 rounded">
-                          <div 
-                            className="w-4 h-4 rounded"
-                            style={{ backgroundColor: annotation.color || '#ffeb3b' }}
-                          />
-                          <span className="text-sm text-purple-800 dark:text-purple-200">
-                            "{annotation.selectedText}"
-                          </span>
-                          {annotation.note && (
-                            <span className="text-xs text-purple-600 dark:text-purple-300">
-                              - {annotation.note}
-                            </span>
+                    <div className="space-y-4">
+                      {annotations.map((annotation) => (
+                        <div key={annotation._id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                          {/* Comment Header */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(annotation.type)}`}>
+                                {annotation.type}
+                              </span>
+                              <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                                <User className="h-3 w-3" />
+                                <span>{annotation.authorName}</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                                <Clock className="h-3 w-3" />
+                                <span>{formatDate(annotation.createdAt)}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => deleteAnnotation(annotation._id)}
+                                className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Selected Text */}
+                          <div className="bg-gray-50 dark:bg-gray-700 rounded p-2 mb-3">
+                            <p className="text-sm text-gray-600 dark:text-gray-300 italic">
+                              "{annotation.selectedText}"
+                            </p>
+                          </div>
+
+                          {/* Comment Content */}
+                          {annotation.text && (
+                            <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                              {annotation.text}
+                            </div>
+                          )}
+
+                          {/* Replies */}
+                          {annotation.replies && annotation.replies.length > 0 && (
+                            <div className="ml-4 space-y-2">
+                              {annotation.replies.map((reply) => (
+                                <div key={reply._id} className="bg-gray-50 dark:bg-gray-700 rounded p-3">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <User className="h-3 w-3 text-gray-500" />
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                      {reply.authorName}
+                                    </span>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                                      {formatDate(reply.createdAt)}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    {reply.text}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
                           )}
                         </div>
                       ))}
@@ -490,17 +591,28 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
                 </div>
                 
                 {/* Document Text */}
-                <div
-                  ref={textRef}
-                  className="prose prose-sm max-w-none text-gray-800 dark:text-gray-200 leading-relaxed"
-                  onMouseUp={handleTextSelection}
-                  onMouseOver={handleKeywordHover}
-                  onMouseLeave={handleMouseLeave}
-                  onClick={handleAnnotationClick}
-                  dangerouslySetInnerHTML={{
-                    __html: highlightKeywords(filteredText.replace(/\n/g, '<br>'))
-                  }}
-                />
+                {(() => {
+                  try {
+                    return (
+                      <div
+                        ref={textRef}
+                        className="text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap"
+                        onMouseUp={handleTextSelection}
+                        onClick={handleCombinedClick}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        {filteredText || 'No text content available'}
+                      </div>
+                    )
+                  } catch (error) {
+                    console.error('Error rendering text:', error)
+                    return (
+                      <div className="p-4 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                        Error rendering text: {error.message}
+                      </div>
+                    )
+                  }
+                })()}
               </div>
             </div>
           ) : (
@@ -549,6 +661,7 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
             onClose={() => setSelectedAnnotation(null)}
           />
         )}
+
 
         {/* Invite Modal */}
         <InviteModal

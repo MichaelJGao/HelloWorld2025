@@ -136,4 +136,40 @@
   .annotation:hover {
     @apply shadow-sm transform scale-105;
   }
+
+  /* Text selection preservation */
+  .prose {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+
+  .prose * {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+
+  /* Ensure text selection is visible */
+  ::selection {
+    background-color: #3b82f6;
+    color: white;
+  }
+
+  ::-moz-selection {
+    background-color: #3b82f6;
+    color: white;
+  }
+
+  .dark ::selection {
+    background-color: #60a5fa;
+    color: #1f2937;
+  }
+
+  .dark ::-moz-selection {
+    background-color: #60a5fa;
+    color: #1f2937;
+  }
 }

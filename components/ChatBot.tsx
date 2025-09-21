@@ -12,7 +12,7 @@ interface Message {
 
 interface ChatBotProps {
   pdfContext: string
-  keywords: Array<{word: string, definition: string, context: string}>
+  keywords: Array<{word: string, definition: string, context: string, isGPT?: boolean}>
   fileName: string
   isVisible: boolean
   onToggle: () => void

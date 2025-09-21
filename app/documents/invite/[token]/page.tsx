@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { FileText, User, Mail, Calendar, Clock, Download, ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { FileText, User, Mail, Calendar, Clock, Download, ArrowLeft, Eye, EyeOff, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
+import UnifiedAnnotations from '@/components/UnifiedAnnotations'
 
 interface InvitedDocument {
   _id: string
@@ -53,6 +54,7 @@ export default function InvitedDocumentViewer() {
   const [error, setError] = useState('')
   const [showText, setShowText] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [activeTab, setActiveTab] = useState<'content' | 'annotations'>('annotations')
 
   useEffect(() => {
     if (token) {
@@ -205,6 +207,34 @@ export default function InvitedDocumentViewer() {
           </div>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => setActiveTab('content')}
+              className={`flex items-center px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'content'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Document Content
+            </button>
+            <button
+              onClick={() => setActiveTab('annotations')}
+              className={`flex items-center px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'annotations'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Collaborative Annotations
+            </button>
+          </div>
+        </div>
+
         {/* Document Info */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
           <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
@@ -261,43 +291,55 @@ export default function InvitedDocumentViewer() {
           )}
         </div>
 
-        {/* Search Bar */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search in document..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          </div>
-        </div>
-
-        {/* Document Content */}
-        {showText ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <div className="prose prose-sm max-w-none text-gray-800 dark:text-gray-200 leading-relaxed">
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: filteredText.replace(/\n/g, '<br>')
-                }}
-              />
+        {/* Tab Content */}
+        {activeTab === 'content' ? (
+          <>
+            {/* Search Bar */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search in document..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
             </div>
-            
-            {searchTerm && (
-              <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                Showing filtered results for: "{searchTerm}"
+
+            {/* Document Content */}
+            {showText ? (
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <div className="prose prose-sm max-w-none text-gray-800 dark:text-gray-200 leading-relaxed">
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: filteredText.replace(/\n/g, '<br>')
+                    }}
+                  />
+                </div>
+                
+                {searchTerm && (
+                  <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    Showing filtered results for: "{searchTerm}"
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
+                <EyeOff className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">Text view is hidden</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Click "Show Text" to view the document content</p>
               </div>
             )}
-          </div>
+          </>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
-            <EyeOff className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">Text view is hidden</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500">Click "Show Text" to view the document content</p>
-          </div>
+          /* Collaborative Annotations */
+          <UnifiedAnnotations 
+            token={token}
+            documentText={document.extractedText}
+            isOwner={false}
+          />
         )}
       </div>
     </div>

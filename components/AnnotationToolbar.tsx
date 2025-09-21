@@ -6,7 +6,7 @@ import { MessageSquare, Palette, Save, X, Edit3 } from 'lucide-react'
 interface AnnotationToolbarProps {
   selectedText: string
   position: { x: number; y: number }
-  onSave: (note: string, color: string) => void
+  onSave: (comment: string, color: string) => void
   onCancel: () => void
   onHighlight: (color: string) => void
 }
@@ -27,15 +27,15 @@ export default function AnnotationToolbar({
   onCancel, 
   onHighlight 
 }: AnnotationToolbarProps) {
-  const [note, setNote] = useState('')
+  const [comment, setComment] = useState('')
   const [selectedColor, setSelectedColor] = useState('#ffeb3b')
-  const [showNoteInput, setShowNoteInput] = useState(false)
+  const [showCommentInput, setShowCommentInput] = useState(false)
 
   const handleSave = () => {
-    if (note.trim()) {
-      onSave(note.trim(), selectedColor)
-      setNote('')
-      setShowNoteInput(false)
+    if (comment.trim()) {
+      onSave(comment.trim(), selectedColor)
+      setComment('')
+      setShowCommentInput(false)
     }
   }
 
@@ -87,15 +87,15 @@ export default function AnnotationToolbar({
       {/* Action Buttons */}
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setShowNoteInput(!showNoteInput)}
+          onClick={() => setShowCommentInput(!showCommentInput)}
           className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-md transition-colors ${
-            showNoteInput
+            showCommentInput
               ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
               : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
           }`}
         >
           <MessageSquare className="h-4 w-4" />
-          Add Note
+          Add Comment
         </button>
 
         <button
@@ -107,13 +107,13 @@ export default function AnnotationToolbar({
         </button>
       </div>
 
-      {/* Note Input */}
-      {showNoteInput && (
+      {/* Comment Input */}
+      {showCommentInput && (
         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
           <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Add a note..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Add a comment..."
             className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
             rows={3}
             autoFocus
@@ -121,8 +121,8 @@ export default function AnnotationToolbar({
           <div className="flex justify-end gap-2 mt-2">
             <button
               onClick={() => {
-                setNote('')
-                setShowNoteInput(false)
+                setComment('')
+                setShowCommentInput(false)
               }}
               className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
             >
@@ -130,11 +130,11 @@ export default function AnnotationToolbar({
             </button>
             <button
               onClick={handleSave}
-              disabled={!note.trim()}
+              disabled={!comment.trim()}
               className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Save className="h-3 w-3" />
-              Save
+              Save Comment
             </button>
           </div>
         </div>
