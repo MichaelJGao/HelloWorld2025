@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Eye, EyeOff, Download, Search, X, FileText } from 'lucide-react'
+import { Eye, EyeOff, Download, Search, X, FileText, Save, MessageSquare } from 'lucide-react'
 import KeywordTooltip from './KeywordTooltip'
+import AnnotationToolbar from './AnnotationToolbar'
+import AnnotationDisplay from './AnnotationDisplay'
 
 interface SavedDocument {
   _id: string
@@ -34,6 +36,22 @@ interface SavedDocument {
   tags: string[]
 }
 
+interface Annotation {
+  _id: string
+  type: 'highlight' | 'note'
+  selectedText: string
+  note?: string
+  color?: string
+  position: {
+    startIndex: number
+    endIndex: number
+    startOffset: number
+    endOffset: number
+  }
+  createdAt: string
+  updatedAt: string
+}
+
 interface SavedDocumentViewerProps {
   document: SavedDocument
   onClose: () => void
@@ -46,18 +64,164 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
   const [showTooltip, setShowTooltip] = useState(false)
   const [hoveredKeyword, setHoveredKeyword] = useState<{word: string, definition: string, context: string} | null>(null)
+  const [annotations, setAnnotations] = useState<Annotation[]>([])
+  const [showAnnotationToolbar, setShowAnnotationToolbar] = useState(false)
+  const [annotationToolbarPosition, setAnnotationToolbarPosition] = useState({ x: 0, y: 0 })
+  const [selectedAnnotation, setSelectedAnnotation] = useState<Annotation | null>(null)
+  const [annotationDisplayPosition, setAnnotationDisplayPosition] = useState({ x: 0, y: 0 })
+  const [loading, setLoading] = useState(false)
   const textRef = useRef<HTMLDivElement>(null)
 
-  // Highlight keywords in the text
+  // Load annotations when component mounts
+  useEffect(() => {
+    loadAnnotations()
+  }, [document._id])
+
+  // Load annotations from API
+  const loadAnnotations = async () => {
+    try {
+      const response = await fetch(`/api/documents/${document._id}/annotations`)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Loaded annotations:', data.annotations)
+        setAnnotations(data.annotations || [])
+      } else {
+        console.error('Failed to load annotations:', response.status)
+      }
+    } catch (error) {
+      console.error('Error loading annotations:', error)
+    }
+  }
+
+  // Save annotation
+  const saveAnnotation = async (note: string, color: string) => {
+    if (!selectedText.trim()) return
+
+    try {
+      setLoading(true)
+      const selection = window.getSelection()
+      if (!selection || !selection.rangeCount) return
+
+      const range = selection.getRangeAt(0)
+      const startContainer = range.startContainer
+      const endContainer = range.endContainer
+
+      // Calculate position in the original text
+      const textContent = textRef.current?.textContent || ''
+      const startIndex = textContent.indexOf(selectedText)
+      const endIndex = startIndex + selectedText.length
+
+      const annotationData = {
+        type: note ? 'note' : 'highlight',
+        selectedText: selectedText.trim(),
+        note: note || '',
+        color,
+        position: {
+          startIndex,
+          endIndex,
+          startOffset: range.startOffset,
+          endOffset: range.endOffset
+        }
+      }
+
+      const response = await fetch(`/api/documents/${document._id}/annotations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(annotationData)
+      })
+
+      if (response.ok) {
+        console.log('Annotation saved successfully')
+        await loadAnnotations() // Reload annotations
+        setShowAnnotationToolbar(false)
+        setSelectedText('')
+        selection.removeAllRanges()
+      } else {
+        console.error('Failed to save annotation:', response.status)
+      }
+    } catch (error) {
+      console.error('Error saving annotation:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Update annotation
+  const updateAnnotation = async (annotation: Annotation) => {
+    try {
+      const response = await fetch(`/api/documents/${document._id}/annotations`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          annotationId: annotation._id,
+          note: annotation.note,
+          color: annotation.color
+        })
+      })
+
+      if (response.ok) {
+        await loadAnnotations() // Reload annotations
+        setSelectedAnnotation(null)
+      }
+    } catch (error) {
+      console.error('Error updating annotation:', error)
+    }
+  }
+
+  // Delete annotation
+  const deleteAnnotation = async (annotationId: string) => {
+    try {
+      const response = await fetch(`/api/documents/${document._id}/annotations?annotationId=${annotationId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        await loadAnnotations() // Reload annotations
+        setSelectedAnnotation(null)
+      }
+    } catch (error) {
+      console.error('Error deleting annotation:', error)
+    }
+  }
+
+  // Highlight keywords and annotations in the text
   const highlightKeywords = (text: string) => {
     let highlightedText = text
     
-    // Sort keywords by length (longest first) to avoid partial matches
+    // First, highlight annotations (they take priority)
+    annotations.forEach(annotation => {
+      const escapedText = annotation.selectedText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = new RegExp(escapedText, 'gi')
+      highlightedText = highlightedText.replace(regex, (match) => {
+        const backgroundColor = annotation.color || '#ffeb3b'
+        const textColor = annotation.type === 'note' ? '#000' : '#333'
+        return `<span class="annotation" data-annotation-id="${annotation._id}" style="background-color: ${backgroundColor}; color: ${textColor}; padding: 1px 2px; border-radius: 2px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1);">${match}</span>`
+      })
+    })
+    
+    // Then highlight keywords (but avoid overlapping with annotations)
     const sortedKeywords = [...document.keywords].sort((a, b) => b.word.length - a.word.length)
     
     sortedKeywords.forEach(keyword => {
       const regex = new RegExp(`\\b${keyword.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
-      highlightedText = highlightedText.replace(regex, (match) => {
+      highlightedText = highlightedText.replace(regex, (match, offset) => {
+        // Check if this match is already inside an annotation span
+        const beforeMatch = highlightedText.substring(0, offset)
+        const afterMatch = highlightedText.substring(offset + match.length)
+        
+        // Count annotation spans before this position
+        const openAnnotations = (beforeMatch.match(/<span class="annotation"/g) || []).length
+        const closeAnnotations = (beforeMatch.match(/<\/span>/g) || []).length
+        
+        // If we're inside an annotation, don't highlight
+        if (openAnnotations > closeAnnotations) {
+          return match
+        }
+        
         return `<span class="keyword" data-keyword="${keyword.word}">${match}</span>`
       })
     })
@@ -69,14 +233,35 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
   const handleTextSelection = () => {
     const selection = window.getSelection()
     if (selection && selection.toString().trim()) {
-      setSelectedText(selection.toString().trim())
-      const range = selection.getRangeAt(0)
-      const rect = range.getBoundingClientRect()
-      setTooltipPosition({
-        x: rect.left + rect.width / 2,
-        y: rect.top - 10
-      })
-      setShowTooltip(true)
+      const selectedText = selection.toString().trim()
+      setSelectedText(selectedText)
+      
+      // Check if this is an existing annotation
+      const existingAnnotation = annotations.find(ann => 
+        ann.selectedText === selectedText
+      )
+      
+      if (existingAnnotation) {
+        // Show existing annotation
+        const range = selection.getRangeAt(0)
+        const rect = range.getBoundingClientRect()
+        setAnnotationDisplayPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.top - 10
+        })
+        setSelectedAnnotation(existingAnnotation)
+        setShowTooltip(false)
+      } else {
+        // Show annotation toolbar for new annotation
+        const range = selection.getRangeAt(0)
+        const rect = range.getBoundingClientRect()
+        setAnnotationToolbarPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.top - 10
+        })
+        setShowAnnotationToolbar(true)
+        setShowTooltip(false)
+      }
     }
   }
 
@@ -93,6 +278,24 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
           y: e.clientY - 10
         })
         setShowTooltip(true)
+      }
+    }
+  }
+
+  // Handle annotation click
+  const handleAnnotationClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (target.classList.contains('annotation')) {
+      const annotationId = target.getAttribute('data-annotation-id')
+      const annotation = annotations.find(ann => ann._id === annotationId)
+      if (annotation) {
+        setSelectedAnnotation(annotation)
+        setAnnotationDisplayPosition({
+          x: e.clientX,
+          y: e.clientY - 10
+        })
+        setShowTooltip(false)
+        setShowAnnotationToolbar(false)
       }
     }
   }
@@ -159,6 +362,18 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
             >
               {showText ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
               {showText ? 'Hide Text' : 'Show Text'}
+            </button>
+            <div className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md">
+              <MessageSquare className="h-4 w-4" />
+              {annotations.length} annotation{annotations.length !== 1 ? 's' : ''}
+            </div>
+            <button
+              onClick={loadAnnotations}
+              className="flex items-center px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              title="Refresh annotations"
+            >
+              <Save className="h-4 w-4 mr-1" />
+              Refresh
             </button>
             <button
               onClick={onClose}
@@ -227,6 +442,33 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
                   </div>
                 )}
 
+                {/* Annotations Debug */}
+                {annotations.length > 0 && (
+                  <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-6">
+                    <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-2">
+                      Your Annotations ({annotations.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {annotations.map((annotation, index) => (
+                        <div key={index} className="flex items-center gap-2 p-2 bg-purple-100 dark:bg-purple-800 rounded">
+                          <div 
+                            className="w-4 h-4 rounded"
+                            style={{ backgroundColor: annotation.color || '#ffeb3b' }}
+                          />
+                          <span className="text-sm text-purple-800 dark:text-purple-200">
+                            "{annotation.selectedText}"
+                          </span>
+                          {annotation.note && (
+                            <span className="text-xs text-purple-600 dark:text-purple-300">
+                              - {annotation.note}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Text Stats */}
                 <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   {filteredText.split('\n').length} lines • {filteredText.length} characters
@@ -244,6 +486,7 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
                   onMouseUp={handleTextSelection}
                   onMouseOver={handleKeywordHover}
                   onMouseLeave={handleMouseLeave}
+                  onClick={handleAnnotationClick}
                   dangerouslySetInnerHTML={{
                     __html: highlightKeywords(filteredText.replace(/\n/g, '<br>'))
                   }}
@@ -268,6 +511,32 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
             keyword={hoveredKeyword}
             selectedText={selectedText}
             onClose={() => setShowTooltip(false)}
+          />
+        )}
+
+        {/* Annotation Toolbar */}
+        {showAnnotationToolbar && (
+          <AnnotationToolbar
+            selectedText={selectedText}
+            position={annotationToolbarPosition}
+            onSave={saveAnnotation}
+            onCancel={() => {
+              setShowAnnotationToolbar(false)
+              setSelectedText('')
+              window.getSelection()?.removeAllRanges()
+            }}
+            onHighlight={(color) => saveAnnotation('', color)}
+          />
+        )}
+
+        {/* Annotation Display */}
+        {selectedAnnotation && (
+          <AnnotationDisplay
+            annotation={selectedAnnotation}
+            position={annotationDisplayPosition}
+            onEdit={updateAnnotation}
+            onDelete={deleteAnnotation}
+            onClose={() => setSelectedAnnotation(null)}
           />
         )}
       </div>

@@ -127,4 +127,13 @@
   .keyword:hover {
     @apply bg-yellow-300 dark:bg-yellow-700;
   }
+
+  /* Annotation highlighting */
+  .annotation {
+    @apply transition-all duration-200 cursor-pointer;
+  }
+
+  .annotation:hover {
+    @apply shadow-sm transform scale-105;
+  }
 }

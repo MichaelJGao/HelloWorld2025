@@ -82,3 +82,21 @@ export interface DocumentComment {
   replies?: ObjectId[]
   parentCommentId?: ObjectId
 }
+
+export interface DocumentAnnotation {
+  _id?: ObjectId
+  documentId: ObjectId
+  userId: ObjectId
+  type: 'highlight' | 'note'
+  selectedText: string
+  note?: string
+  color?: string
+  position: {
+    startIndex: number
+    endIndex: number
+    startOffset: number
+    endOffset: number
+  }
+  createdAt: Date
+  updatedAt: Date
+}
