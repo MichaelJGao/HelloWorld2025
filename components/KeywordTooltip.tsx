@@ -118,12 +118,29 @@ export default function KeywordTooltip({ position, keyword, selectedText, onClos
 
   if (!keyword && !selectedText) return null
 
+  // Calculate tooltip dimensions for positioning
+  const tooltipWidth = 420 // max-w-md is approximately 28rem = 448px, using 420 for safety
+  const tooltipHeight = 300 // Estimated height for positioning calculations
+  
+  // Calculate optimal position
+  const leftPosition = Math.min(
+    Math.max(position.x - tooltipWidth / 2, 10), // Center horizontally, but keep 10px margin
+    window.innerWidth - tooltipWidth - 10 // Don't exceed right edge
+  )
+  
+  const topPosition = position.y - tooltipHeight - 10 // Position above the selection by default
+  
+  // If tooltip would be cut off at the top, position it below instead
+  const finalTopPosition = topPosition < 10 
+    ? position.y + 20 // Position below the selection
+    : topPosition
+
   return (
     <div
       className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 max-w-md"
       style={{
-        left: Math.min(position.x - 200, window.innerWidth - 420),
-        top: Math.max(position.y, 10),
+        left: leftPosition,
+        top: finalTopPosition,
       }}
     >
       <div className="p-4">
