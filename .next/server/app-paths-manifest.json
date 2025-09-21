@@ -1,9 +1,6 @@
 {
   "/page": "app/page.js",
-  "/api/documents/invite/[token]/annotations/route": "app/api/documents/invite/[token]/annotations/route.js",
-  "/api/documents/[id]/annotations/route": "app/api/documents/[id]/annotations/route.js",
-  "/api/documents/invite/[token]/route": "app/api/documents/invite/[token]/route.js",
-  "/documents/invite/[token]/page": "app/documents/invite/[token]/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/documents/route": "app/api/documents/route.js"
+  "/auth/signin/page": "app/auth/signin/page.js",
+  "/api/chat/route": "app/api/chat/route.js",
+  "/api/generate-document-summary/route": "app/api/generate-document-summary/route.js"
 }

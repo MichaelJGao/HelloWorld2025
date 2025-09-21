@@ -1,4 +1,4 @@
-// File: C:\Users\adars\OneDrive\Documents\HelloWorld\HelloWorld2025\app\api\detect-keywords\route.ts
+// File: /home/rishi/Desktop/hackathon/HelloWorld2025/app/api/detect-keywords/route.ts
 import * as entry from '../../../../../app/api/detect-keywords/route.js'
 import type { NextRequest } from 'next/server.js'
 
