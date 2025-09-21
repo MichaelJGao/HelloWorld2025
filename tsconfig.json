@@ -1,28 +1,61 @@
 {
+  /**
+   * TypeScript Configuration
+   * 
+   * This configuration file defines TypeScript compiler options for the PDF Keyword
+   * Analyzer Next.js application. It includes type checking rules, module resolution,
+   * and path mapping for optimal development experience.
+   * 
+   * Features:
+   * - ES5 target with modern library support
+   * - Strict type checking enabled
+   * - Next.js plugin integration
+   * - Path mapping for cleaner imports (@/ alias)
+   * - Incremental compilation for faster builds
+   * 
+   * @fileoverview TypeScript configuration for Next.js application
+   * @author PDF Keyword Analyzer Team
+   * @version 1.0.0
+   */
   "compilerOptions": {
+    // Compilation target and libraries
     "target": "es5",
     "lib": ["dom", "dom.iterable", "es6"],
+    
+    // JavaScript support and type checking
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    
+    // Module system configuration
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    
+    // JSX and build configuration
     "jsx": "preserve",
     "incremental": true,
+    
+    // Next.js plugin for enhanced TypeScript support
     "plugins": [
       {
         "name": "next"
       }
     ],
+    
+    // Path mapping for cleaner imports
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }
   },
+  
+  // Files to include in compilation
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  
+  // Files to exclude from compilation
   "exclude": ["node_modules"]
 }

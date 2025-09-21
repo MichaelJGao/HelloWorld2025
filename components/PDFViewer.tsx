@@ -1,15 +1,57 @@
+/**
+ * PDF Viewer Component
+ * 
+ * This component provides a simple PDF document viewing interface with
+ * keyword highlighting, text selection, and search functionality.
+ * It's designed for basic document viewing without advanced features.
+ * 
+ * Key Features:
+ * - PDF text display with keyword highlighting
+ * - Interactive keyword tooltips
+ * - Text selection and search functionality
+ * - Download capability
+ * - Toggle text visibility
+ * - Responsive design
+ * 
+ * @fileoverview Simple PDF viewer with keyword highlighting
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
 import { Eye, EyeOff, Download, Search } from 'lucide-react'
 import KeywordTooltip from './KeywordTooltip'
 
+/**
+ * Props interface for PDFViewer component
+ */
 interface PDFViewerProps {
   file: File
   extractedText: string
   keywords: Array<{word: string, definition: string, context: string, isGPT?: boolean}>
 }
 
+/**
+ * PDF Viewer Component
+ * 
+ * This component renders a simple PDF viewing interface with
+ * keyword highlighting and basic interaction features.
+ * 
+ * State Management:
+ * - showText: Controls text visibility toggle
+ * - searchTerm: Manages search functionality
+ * - selectedText: Currently selected text
+ * - tooltipPosition: Position for keyword tooltips
+ * - showTooltip: Controls tooltip visibility
+ * - hoveredKeyword: Currently hovered keyword data
+ * 
+ * @param file - PDF file to display
+ * @param extractedText - Text content extracted from PDF
+ * @param keywords - Array of detected keywords with definitions
+ * @returns JSX element containing the PDF viewer interface
+ */
 export default function PDFViewer({ file, extractedText, keywords }: PDFViewerProps) {
   const [showText, setShowText] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')

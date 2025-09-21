@@ -1,23 +1,69 @@
+/**
+ * API Route: Generate Summary
+ * 
+ * This API endpoint generates intelligent definitions and summaries for keywords
+ * detected in PDF documents. It uses OpenAI GPT-3.5-turbo for context-aware
+ * definitions and includes image search capabilities for enhanced understanding.
+ * 
+ * Features:
+ * - AI-powered definition generation with document context
+ * - Online search capability for broader definitions
+ * - Automatic image search and retrieval
+ * - Fallback definitions for common terms
+ * - Acronym detection and expansion
+ * 
+ * @fileoverview API route for generating keyword summaries and definitions
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
+// Initialize OpenAI client for AI-powered definitions
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+/**
+ * POST /api/generate-summary
+ * 
+ * Generates intelligent definitions and summaries for keywords with optional
+ * image search and online context.
+ * 
+ * Request Body:
+ * - term: string - The keyword to define
+ * - context: string - Document context where the term appears
+ * - searchOnline: boolean - Whether to search online for broader definition
+ * 
+ * Response:
+ * - summary: string - Generated definition/summary
+ * - imageUrl: string - Related image URL (if found)
+ * - imageAlt: string - Image alt text
+ * - source: string - Image source
+ * - wikipediaUrl: string - Wikipedia URL (if available)
+ * - description: string - Image description
+ * - imageMessage: string - Additional image information
+ * - fallback: boolean - Whether fallback definition was used
+ * 
+ * @param request - Next.js request object containing term and context
+ * @returns JSON response with definition and related media
+ */
 export async function POST(request: NextRequest) {
   try {
     const { term, context, searchOnline } = await request.json()
 
+    // Validate required input
     if (!term) {
       return NextResponse.json({ error: 'Term is required' }, { status: 400 })
     }
 
-    // Try OpenAI first, but provide fallback if quota exceeded
+    // Try OpenAI first for intelligent, context-aware definitions
     try {
-             const prompt = searchOnline
-               ? `Provide a concise definition for "${term}". Aim for 2-3 sentences. Include the essential meaning and key information.`
-               : `Based on the document context, give a concise definition for "${term}". 
+      // Create context-aware prompt based on search preference
+      const prompt = searchOnline
+        ? `Provide a concise definition for "${term}". Aim for 2-3 sentences. Include the essential meaning and key information.`
+        : `Based on the document context, give a concise definition for "${term}". 
 
 IMPORTANT: 
 - If "${term}" is an acronym, find its definition within the document context first
@@ -27,64 +73,65 @@ IMPORTANT:
 
 Document context: "${context}"`
 
-             const completion = await openai.chat.completions.create({
-               model: "gpt-3.5-turbo",
-               messages: [
-                 {
-                   role: "system",
-                   content: "You are a helpful assistant that provides concise, accurate definitions. Keep responses to 2-3 sentences. Focus on essential meaning and document-specific context."
-                 },
-                 {
-                   role: "user",
-                   content: prompt
-                 }
-               ],
-               max_tokens: 150,
-               temperature: 0.2,
-             })
+      // Generate AI-powered definition
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful assistant that provides concise, accurate definitions. Keep responses to 2-3 sentences. Focus on essential meaning and document-specific context."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: 150,
+        temperature: 0.2,
+      })
 
-             const summary = completion.choices[0]?.message?.content || 'No summary available.'
-             
-             // Search for an image related to the term
-             let imageUrl = ''
-             let imageAlt = ''
-             let source = ''
-             let wikipediaUrl = ''
-             let description = ''
-             let imageMessage = ''
-             
-             try {
-               const imageResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/search-image`, {
-                 method: 'POST',
-                 headers: {
-                   'Content-Type': 'application/json',
-                 },
-                 body: JSON.stringify({ term, context }),
-               })
-               
-               if (imageResponse.ok) {
-                 const imageData = await imageResponse.json()
-                 imageUrl = imageData.imageUrl || ''
-                 imageAlt = imageData.imageAlt || ''
-                 source = imageData.source || ''
-                 wikipediaUrl = imageData.wikipediaUrl || ''
-                 description = imageData.description || ''
-                 imageMessage = imageData.message || ''
-               }
-             } catch (imageError) {
-               console.error('Error fetching image:', imageError)
-               // Continue without image
-             }
+      const summary = completion.choices[0]?.message?.content || 'No summary available.'
+      
+      // Search for related images to enhance understanding
+      let imageUrl = ''
+      let imageAlt = ''
+      let source = ''
+      let wikipediaUrl = ''
+      let description = ''
+      let imageMessage = ''
+      
+      try {
+        const imageResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/search-image`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ term, context }),
+        })
+        
+        if (imageResponse.ok) {
+          const imageData = await imageResponse.json()
+          imageUrl = imageData.imageUrl || ''
+          imageAlt = imageData.imageAlt || ''
+          source = imageData.source || ''
+          wikipediaUrl = imageData.wikipediaUrl || ''
+          description = imageData.description || ''
+          imageMessage = imageData.message || ''
+        }
+      } catch (imageError) {
+        console.error('Error fetching image:', imageError)
+        // Continue without image
+      }
 
-             return NextResponse.json({
-               summary,
-               imageUrl,
-               imageAlt,
-               source,
-               wikipediaUrl,
-               description,
-               imageMessage
-             })
+      return NextResponse.json({
+        summary,
+        imageUrl,
+        imageAlt,
+        source,
+        wikipediaUrl,
+        description,
+        imageMessage
+      })
 
     } catch (apiError: any) {
       console.error('OpenAI API Error:', apiError)

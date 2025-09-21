@@ -1,11 +1,43 @@
+/**
+ * Main Page Component - PDF Keyword Analyzer
+ * 
+ * This is the primary page component that handles the entire PDF analysis workflow.
+ * It provides a comprehensive interface for uploading PDFs, processing them with AI,
+ * and displaying various analysis views including summaries, concept maps, and chat.
+ * 
+ * Key Features:
+ * - PDF file upload with drag-and-drop support
+ * - AI-powered text extraction and keyword detection
+ * - Multiple view modes (Viewer, Summary, Concept Map, Chat, History)
+ * - Real-time processing with animated feedback
+ * - Document saving and annotation capabilities
+ * - Responsive design with dark mode support
+ * 
+ * Workflow:
+ * 1. User uploads a PDF file
+ * 2. Text is extracted using PDF.js
+ * 3. AI analyzes the text to detect keywords and generate summaries
+ * 4. User can switch between different analysis views
+ * 5. Document can be saved for future reference
+ * 
+ * @fileoverview Main page component for the PDF Keyword Analyzer application
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState } from 'react'
 
-// Force dynamic rendering
+// Force dynamic rendering to ensure client-side functionality
 export const dynamic = 'force-dynamic'
+
+// Third-party imports
 import { useDropzone } from 'react-dropzone'
 import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye, MessageCircle, History, Save, Network } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+
+// Component imports
 import PDFDisplay from '@/components/PDFDisplay'
 import SummaryPanel from '@/components/SummaryPanel'
 import ConceptMap from '@/components/ConceptMap'
@@ -17,41 +49,87 @@ import UserMenu from '@/components/UserMenu'
 import DocumentHistory from '@/components/DocumentHistory'
 import DocumentAnnotations from '@/components/DocumentAnnotations'
 import UnifiedAnnotations from '@/components/UnifiedAnnotations'
+
+// Utility imports
 import { extractTextFromPDF } from '@/lib/pdfProcessor'
 import { detectKeywords } from '@/lib/keywordDetector'
-import { useSession } from 'next-auth/react'
 
+/**
+ * Home Component - Main Application Interface
+ * 
+ * The primary component that manages the entire PDF analysis workflow.
+ * Handles file upload, text extraction, AI processing, and multiple view modes.
+ * 
+ * State Management:
+ * - pdfFile: Currently uploaded PDF file
+ * - extractedText: Raw text extracted from PDF
+ * - keywords: AI-detected keywords with definitions and context
+ * - isProcessing: Loading state during PDF processing
+ * - error: Error messages for user feedback
+ * - activeTab: Current view mode (viewer, summary, concept, chat, history)
+ * - showLandingPage: Controls landing page visibility
+ * - showChatBot: Controls chat interface visibility
+ * - isSaving: Loading state during document save
+ * - saveMessage: User feedback for save operations
+ * - savedDocumentId: ID of saved document for annotations
+ * - annotationCount: Number of annotations on current document
+ * 
+ * @returns JSX element containing the complete application interface
+ */
 export default function Home() {
+  // Authentication state
   const { data: session } = useSession()
+  
+  // File and content state
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [extractedText, setExtractedText] = useState<string>('')
   const [keywords, setKeywords] = useState<Array<{word: string, definition: string, context: string}>>([])
+  
+  // UI state
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string>('')
   const [activeTab, setActiveTab] = useState<'viewer' | 'summary' | 'concept' | 'chat' | 'history'>('viewer')
   const [showLandingPage, setShowLandingPage] = useState(true)
   const [showChatBot, setShowChatBot] = useState(false)
+  
+  // Document management state
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
   const [savedDocumentId, setSavedDocumentId] = useState<string | null>(null)
   const [annotationCount, setAnnotationCount] = useState(0)
 
+  /**
+   * Handles PDF file upload and processing
+   * 
+   * This function is called when a user drops or selects a PDF file.
+   * It performs the complete workflow of text extraction and keyword detection.
+   * 
+   * Process:
+   * 1. Validates that the file is a PDF
+   * 2. Extracts text content using PDF.js
+   * 3. Attempts AI-powered keyword detection via API
+   * 4. Falls back to local keyword detection if API fails
+   * 5. Updates UI state with results
+   * 
+   * @param acceptedFiles - Array of files from the dropzone component
+   */
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
     if (file && file.type === 'application/pdf') {
+      // Initialize processing state
       setPdfFile(file)
       setError('')
       setIsProcessing(true)
       setShowLandingPage(false) // Hide landing page when file is uploaded
       
       try {
-        // Extract text from PDF
+        // Extract text from PDF using PDF.js
         const text = await extractTextFromPDF(file)
         console.log('Extracted text length:', text.length)
         console.log('First 500 characters:', text.substring(0, 500))
         setExtractedText(text)
         
-        // Detect keywords using AI
+        // Attempt AI-powered keyword detection
         const keywordResponse = await fetch('/api/detect-keywords', {
           method: 'POST',
           headers: {
@@ -61,26 +139,31 @@ export default function Home() {
         })
         
         if (keywordResponse.ok) {
+          // Use AI-detected keywords
           const { keywords } = await keywordResponse.json()
           console.log('AI detected keywords:', keywords.length, keywords)
           setKeywords(keywords)
         } else {
-          // Fallback to local detection
+          // Fallback to local keyword detection
           const detectedKeywords = detectKeywords(text)
           console.log('Fallback detected keywords:', detectedKeywords.length, detectedKeywords)
           setKeywords(detectedKeywords)
         }
       } catch (err) {
+        // Handle processing errors
         setError('Failed to process PDF. Please try again.')
         console.error('Error processing PDF:', err)
       } finally {
+        // Always stop processing state
         setIsProcessing(false)
       }
     } else {
+      // Handle invalid file type
       setError('Please upload a valid PDF file.')
     }
   }
 
+  // Configure dropzone for PDF file uploads
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
@@ -89,16 +172,39 @@ export default function Home() {
     multiple: false
   })
 
+  /**
+   * Saves the current document to the database
+   * 
+   * This function saves the processed PDF document along with its extracted text
+   * and keywords to the database for future reference and annotation capabilities.
+   * 
+   * Requirements:
+   * - User must be authenticated
+   * - PDF file must be uploaded and processed
+   * - Extracted text must be available
+   * 
+   * Process:
+   * 1. Validates prerequisites (session, file, text)
+   * 2. Sends document data to API endpoint
+   * 3. Updates UI with save status
+   * 4. Stores document ID for annotation features
+   * 
+   * @async
+   * @returns Promise that resolves when save operation completes
+   */
   const saveDocument = async () => {
+    // Validate prerequisites
     if (!session || !pdfFile || !extractedText) {
       setSaveMessage('Please sign in and process a document first')
       return
     }
 
+    // Initialize save state
     setIsSaving(true)
     setSaveMessage('')
 
     try {
+      // Send document data to API
       const response = await fetch('/api/documents', {
         method: 'POST',
         headers: {
@@ -115,17 +221,21 @@ export default function Home() {
       })
 
       if (response.ok) {
+        // Handle successful save
         const data = await response.json()
         setSavedDocumentId(data.document._id)
         setSaveMessage('Document saved successfully!')
         setTimeout(() => setSaveMessage(''), 3000)
       } else {
+        // Handle save failure
         setSaveMessage('Failed to save document')
       }
     } catch (error) {
+      // Handle save error
       console.error('Error saving document:', error)
       setSaveMessage('Error saving document')
     } finally {
+      // Always stop saving state
       setIsSaving(false)
     }
   }

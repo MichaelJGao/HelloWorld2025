@@ -41,16 +41,6 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 
 /***/ }),
 
-/***/ "(ssr)/./node_modules/lucide-react/dist/esm/icons/arrow-left.js":
-/*!****************************************************************!*\
-  !*** ./node_modules/lucide-react/dist/esm/icons/arrow-left.js ***!
-  \****************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ ArrowLeft)\n/* harmony export */ });\n/* harmony import */ var _createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../createLucideIcon.js */ \"(ssr)/./node_modules/lucide-react/dist/esm/createLucideIcon.js\");\n/**\n * @license lucide-react v0.294.0 - ISC\n *\n * This source code is licensed under the ISC license.\n * See the LICENSE file in the root directory of this source tree.\n */ \nconst ArrowLeft = (0,_createLucideIcon_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"])(\"ArrowLeft\", [\n    [\n        \"path\",\n        {\n            d: \"m12 19-7-7 7-7\",\n            key: \"1l729n\"\n        }\n    ],\n    [\n        \"path\",\n        {\n            d: \"M19 12H5\",\n            key: \"x3x0zl\"\n        }\n    ]\n]);\n //# sourceMappingURL=arrow-left.js.map\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHNzcikvLi9ub2RlX21vZHVsZXMvbHVjaWRlLXJlYWN0L2Rpc3QvZXNtL2ljb25zL2Fycm93LWxlZnQuanMiLCJtYXBwaW5ncyI6Ijs7Ozs7QUFBQTs7Ozs7Q0FLQyxHQUVxRDtBQUV0RCxNQUFNQyxZQUFZRCxnRUFBZ0JBLENBQUMsYUFBYTtJQUM5QztRQUFDO1FBQVE7WUFBRUUsR0FBRztZQUFrQkMsS0FBSztRQUFTO0tBQUU7SUFDaEQ7UUFBQztRQUFRO1lBQUVELEdBQUc7WUFBWUMsS0FBSztRQUFTO0tBQUU7Q0FDM0M7QUFFK0IsQ0FDaEMsc0NBQXNDIiwic291cmNlcyI6WyJ3ZWJwYWNrOi8vcGRmLWtleXdvcmQtYW5hbHl6ZXIvLi9ub2RlX21vZHVsZXMvbHVjaWRlLXJlYWN0L2Rpc3QvZXNtL2ljb25zL2Fycm93LWxlZnQuanM/NDQ4MCJdLCJzb3VyY2VzQ29udGVudCI6WyIvKipcbiAqIEBsaWNlbnNlIGx1Y2lkZS1yZWFjdCB2MC4yOTQuMCAtIElTQ1xuICpcbiAqIFRoaXMgc291cmNlIGNvZGUgaXMgbGljZW5zZWQgdW5kZXIgdGhlIElTQyBsaWNlbnNlLlxuICogU2VlIHRoZSBMSUNFTlNFIGZpbGUgaW4gdGhlIHJvb3QgZGlyZWN0b3J5IG9mIHRoaXMgc291cmNlIHRyZWUuXG4gKi9cblxuaW1wb3J0IGNyZWF0ZUx1Y2lkZUljb24gZnJvbSAnLi4vY3JlYXRlTHVjaWRlSWNvbi5qcyc7XG5cbmNvbnN0IEFycm93TGVmdCA9IGNyZWF0ZUx1Y2lkZUljb24oXCJBcnJvd0xlZnRcIiwgW1xuICBbXCJwYXRoXCIsIHsgZDogXCJtMTIgMTktNy03IDctN1wiLCBrZXk6IFwiMWw3MjluXCIgfV0sXG4gIFtcInBhdGhcIiwgeyBkOiBcIk0xOSAxMkg1XCIsIGtleTogXCJ4M3gwemxcIiB9XVxuXSk7XG5cbmV4cG9ydCB7IEFycm93TGVmdCBhcyBkZWZhdWx0IH07XG4vLyMgc291cmNlTWFwcGluZ1VSTD1hcnJvdy1sZWZ0LmpzLm1hcFxuIl0sIm5hbWVzIjpbImNyZWF0ZUx1Y2lkZUljb24iLCJBcnJvd0xlZnQiLCJkIiwia2V5IiwiZGVmYXVsdCJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///(ssr)/./node_modules/lucide-react/dist/esm/icons/arrow-left.js\n");
-
-/***/ }),
-
 /***/ "(ssr)/./node_modules/lucide-react/dist/esm/icons/arrow-right.js":
 /*!*****************************************************************!*\
   !*** ./node_modules/lucide-react/dist/esm/icons/arrow-right.js ***!

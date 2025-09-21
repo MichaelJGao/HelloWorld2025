@@ -1,8 +1,31 @@
+/**
+ * Annotation Toolbar Component
+ * 
+ * This component provides a floating toolbar interface for creating
+ * annotations on selected text. It supports both highlighting and
+ * commenting with color selection capabilities.
+ * 
+ * Key Features:
+ * - Floating toolbar with positioning
+ * - Color selection for highlights
+ * - Comment input functionality
+ * - Highlight and comment actions
+ * - Responsive positioning
+ * - Dark mode support
+ * 
+ * @fileoverview Floating annotation toolbar for text selection
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState } from 'react'
 import { MessageSquare, Palette, Save, X, Edit3 } from 'lucide-react'
 
+/**
+ * Props interface for AnnotationToolbar component
+ */
 interface AnnotationToolbarProps {
   selectedText: string
   position: { x: number; y: number }
@@ -11,6 +34,9 @@ interface AnnotationToolbarProps {
   onHighlight: (color: string) => void
 }
 
+/**
+ * Available color options for highlighting
+ */
 const colors = [
   { name: 'Yellow', value: '#ffeb3b', bg: 'bg-yellow-200' },
   { name: 'Green', value: '#4caf50', bg: 'bg-green-200' },
@@ -20,6 +46,24 @@ const colors = [
   { name: 'Purple', value: '#9c27b0', bg: 'bg-purple-200' }
 ]
 
+/**
+ * Annotation Toolbar Component
+ * 
+ * This component renders a floating toolbar for creating annotations
+ * with color selection and comment functionality.
+ * 
+ * State Management:
+ * - comment: Text content for annotation comment
+ * - selectedColor: Currently selected highlight color
+ * - showCommentInput: Controls comment input visibility
+ * 
+ * @param selectedText - Text that was selected for annotation
+ * @param position - Screen position for toolbar placement
+ * @param onSave - Callback for saving annotation with comment and color
+ * @param onCancel - Callback for canceling annotation creation
+ * @param onHighlight - Callback for highlighting with selected color
+ * @returns JSX element containing the floating annotation toolbar
+ */
 export default function AnnotationToolbar({ 
   selectedText, 
   position, 
@@ -31,6 +75,9 @@ export default function AnnotationToolbar({
   const [selectedColor, setSelectedColor] = useState('#ffeb3b')
   const [showCommentInput, setShowCommentInput] = useState(false)
 
+  /**
+   * Handle saving annotation with comment and color
+   */
   const handleSave = () => {
     if (comment.trim()) {
       onSave(comment.trim(), selectedColor)
@@ -39,6 +86,11 @@ export default function AnnotationToolbar({
     }
   }
 
+  /**
+   * Handle highlighting with selected color
+   * 
+   * @param color - Selected color value
+   */
   const handleHighlight = (color: string) => {
     setSelectedColor(color)
     onHighlight(color)

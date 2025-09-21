@@ -1,3 +1,23 @@
+/**
+ * Invited Document Viewer Page Component
+ * 
+ * This page allows users to view documents that have been shared with them
+ * via invitation tokens. It provides a comprehensive document viewing experience
+ * with collaborative annotations and document analysis features.
+ * 
+ * Key Features:
+ * - Document viewing with invitation token validation
+ * - Collaborative annotations system
+ * - Document metadata display
+ * - Search functionality within document content
+ * - Responsive design with dark mode support
+ * - Error handling for invalid or expired tokens
+ * 
+ * @fileoverview Invited document viewer with collaborative features
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -6,6 +26,9 @@ import { FileText, User, Mail, Calendar, Clock, Download, ArrowLeft, Eye, EyeOff
 import Link from 'next/link'
 import UnifiedAnnotations from '@/components/UnifiedAnnotations'
 
+/**
+ * Interface for invited document data structure
+ */
 interface InvitedDocument {
   _id: string
   fileName: string
@@ -45,6 +68,22 @@ interface InvitedDocument {
   }
 }
 
+/**
+ * Invited Document Viewer Component
+ * 
+ * This component renders the invited document viewing interface with
+ * collaborative features and document analysis capabilities.
+ * 
+ * State Management:
+ * - document: Stores the invited document data
+ * - loading: Controls loading state during document fetch
+ * - error: Manages error states and messages
+ * - showText: Toggles text visibility
+ * - searchTerm: Manages search functionality
+ * - activeTab: Controls content vs annotations view
+ * 
+ * @returns JSX element containing the complete document viewer interface
+ */
 export default function InvitedDocumentViewer() {
   const params = useParams()
   const token = params.token as string
@@ -56,12 +95,21 @@ export default function InvitedDocumentViewer() {
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'content' | 'annotations'>('annotations')
 
+  /**
+   * Fetch document data when token is available
+   */
   useEffect(() => {
     if (token) {
       fetchDocument()
     }
   }, [token])
 
+  /**
+   * Fetch invited document data from API
+   * 
+   * Retrieves document information using the invitation token
+   * and handles loading states and error conditions.
+   */
   const fetchDocument = async () => {
     try {
       setLoading(true)
@@ -82,6 +130,12 @@ export default function InvitedDocumentViewer() {
     }
   }
 
+  /**
+   * Format file size in human-readable format
+   * 
+   * @param bytes - File size in bytes
+   * @returns Formatted file size string
+   */
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
     const k = 1024
@@ -90,6 +144,12 @@ export default function InvitedDocumentViewer() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
+  /**
+   * Format date string for display
+   * 
+   * @param dateString - ISO date string
+   * @returns Formatted date string
+   */
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',

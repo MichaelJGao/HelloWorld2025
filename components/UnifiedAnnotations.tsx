@@ -1,8 +1,32 @@
+/**
+ * Unified Annotations Component
+ * 
+ * This component provides a comprehensive collaborative annotation system
+ * for PDF documents. It supports both document owners and invited users
+ * with real-time updates, threaded discussions, and various annotation types.
+ * 
+ * Key Features:
+ * - Real-time collaborative annotations with polling
+ * - Multiple annotation types (comment, highlight, question, suggestion)
+ * - Threaded replies and discussions
+ * - Text selection and annotation creation
+ * - Edit and delete functionality
+ * - Permission-based access control
+ * - Error handling and loading states
+ * 
+ * @fileoverview Collaborative annotation system for PDF documents
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
 import { MessageSquare, Plus, Edit2, Trash2, Reply, Send, X, Check, AlertCircle, User, Clock, Users } from 'lucide-react'
 
+/**
+ * Interface for annotation data structure
+ */
 interface Annotation {
   _id: string
   text: string
@@ -17,6 +41,9 @@ interface Annotation {
   inviterEmail?: string
 }
 
+/**
+ * Interface for reply data structure
+ */
 interface Reply {
   _id: string
   text: string
@@ -26,6 +53,9 @@ interface Reply {
   updatedAt: string
 }
 
+/**
+ * Props interface for UnifiedAnnotations component
+ */
 interface UnifiedAnnotationsProps {
   documentId?: string
   token?: string
@@ -34,6 +64,33 @@ interface UnifiedAnnotationsProps {
   onAnnotationAdd?: (annotation: Annotation) => void
 }
 
+/**
+ * Unified Annotations Component
+ * 
+ * This component renders the collaborative annotation interface with
+ * real-time updates, text selection, and comprehensive annotation management.
+ * 
+ * State Management:
+ * - annotations: Array of all annotations for the document
+ * - selectedText: Currently selected text for annotation
+ * - showAnnotationForm: Controls annotation form visibility
+ * - annotationText: Text content for new annotation
+ * - annotationType: Type of annotation being created
+ * - editingAnnotation: ID of annotation being edited
+ * - editingReply: Reply being edited
+ * - replyingTo: Annotation ID for reply creation
+ * - replyText: Text content for new reply
+ * - loading: Loading state for API operations
+ * - error: Error message display
+ * - refreshing: Silent refresh state
+ * 
+ * @param documentId - Document ID for owner access
+ * @param token - Invitation token for guest access
+ * @param documentText - Full text content of the document
+ * @param isOwner - Whether user is document owner
+ * @param onAnnotationAdd - Callback when annotation is added
+ * @returns JSX element containing the complete annotation interface
+ */
 export default function UnifiedAnnotations({ 
   documentId,
   token,
@@ -56,6 +113,9 @@ export default function UnifiedAnnotations({
   
   const textRef = useRef<HTMLDivElement>(null)
 
+  /**
+   * Initialize annotations and set up real-time polling
+   */
   useEffect(() => {
     fetchAnnotations()
     
@@ -69,6 +129,14 @@ export default function UnifiedAnnotations({
     return () => clearInterval(interval)
   }, [documentId, token])
 
+  /**
+   * Fetch annotations from API
+   * 
+   * Retrieves all annotations for the document with support for
+   * both owner and guest access modes.
+   * 
+   * @param silent - Whether to show loading indicators
+   */
   const fetchAnnotations = async (silent = false) => {
     try {
       if (!silent) setRefreshing(true)
@@ -93,6 +161,12 @@ export default function UnifiedAnnotations({
     }
   }
 
+  /**
+   * Handle text selection for annotation creation
+   * 
+   * Captures selected text and shows the annotation form
+   * for creating new annotations.
+   */
   const handleTextSelection = () => {
     const selection = window.getSelection()
     if (selection && selection.toString().trim()) {
@@ -101,6 +175,12 @@ export default function UnifiedAnnotations({
     }
   }
 
+  /**
+   * Create a new annotation
+   * 
+   * Saves a new annotation to the database with the selected text
+   * and annotation content.
+   */
   const createAnnotation = async () => {
     if (!annotationText.trim() || !selectedText.trim()) return
 

@@ -1,19 +1,60 @@
+/**
+ * API Route: Chat Assistant
+ * 
+ * This API endpoint provides an AI-powered chat interface for interacting with
+ * PDF documents. It uses OpenAI GPT-3.5-turbo to answer questions about document
+ * content and provides intelligent responses based on the PDF context and keywords.
+ * 
+ * Features:
+ * - AI-powered document Q&A using OpenAI GPT-3.5-turbo
+ * - Context-aware responses based on PDF content
+ * - Keyword integration for enhanced understanding
+ * - Fallback pattern-based responses when AI is unavailable
+ * - Comprehensive error handling and logging
+ * 
+ * @fileoverview API route for AI chat functionality with PDF documents
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
+// Initialize OpenAI client for AI-powered chat responses
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+/**
+ * POST /api/chat
+ * 
+ * Processes chat messages and generates AI responses based on PDF document content.
+ * 
+ * Request Body:
+ * - message: string - User's question or message
+ * - pdfContext: string - Full text content of the PDF document
+ * - keywords: Array - Optional array of detected keywords with definitions
+ * - fileName: string - Optional name of the PDF file
+ * 
+ * Response:
+ * - response: string - AI-generated response
+ * - success: boolean - Whether the request was successful
+ * - timestamp: string - ISO timestamp of the response
+ * 
+ * @param request - Next.js request object containing chat message and PDF context
+ * @returns JSON response with AI-generated answer
+ */
 export async function POST(request: NextRequest) {
   try {
     console.log('Chat API POST request received')
     
+    // Parse request body
     const body = await request.json()
     console.log('Request body received:', { message: body.message, hasContext: !!body.pdfContext })
     
     const { message, pdfContext, keywords, fileName } = body
     
+    // Validate required fields
     if (!message || !pdfContext) {
       console.log('Missing required fields:', { message: !!message, pdfContext: !!pdfContext })
       return NextResponse.json(
@@ -23,6 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Generating AI response...')
+    // Generate AI response based on PDF content and user message
     const response = await generateAIResponse(message, pdfContext, keywords, fileName)
     console.log('Generated response length:', response.length)
 
@@ -45,12 +87,31 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * Generate AI Response
+ * 
+ * This function generates intelligent responses to user questions about PDF content
+ * using OpenAI GPT-3.5-turbo. It includes fallback pattern-based responses when
+ * AI is unavailable and provides context-aware answers based on document content.
+ * 
+ * Process:
+ * 1. Attempts AI-powered response using OpenAI GPT-3.5-turbo
+ * 2. Falls back to pattern-based responses if AI fails
+ * 3. Extracts important terms from PDF context
+ * 4. Generates contextual responses based on message patterns
+ * 
+ * @param message - User's question or message
+ * @param pdfContext - Full text content of the PDF document
+ * @param keywords - Optional array of detected keywords with definitions
+ * @param fileName - Optional name of the PDF file
+ * @returns Promise resolving to AI-generated response string
+ */
 async function generateAIResponse(message: string, pdfContext: string, keywords?: Array<{word: string, definition: string, context: string}>, fileName?: string): Promise<string> {
   try {
     console.log('generateAIResponse called with message:', message)
     console.log('PDF context length:', pdfContext.length)
     
-    // Try OpenAI first for intelligent responses
+    // Try OpenAI first for intelligent, context-aware responses
     try {
       const systemPrompt = `You are an AI assistant that helps users understand PDF documents. You have access to the full text content of a PDF document and should provide accurate, helpful responses based on that content.
 

@@ -1,9 +1,33 @@
+/**
+ * Summary Panel Component
+ * 
+ * This component provides comprehensive document analysis and summarization features.
+ * It generates AI-powered summaries, sentiment analysis, and key insights from
+ * PDF documents with export capabilities and interactive sub-tabs.
+ * 
+ * Key Features:
+ * - AI-powered document summarization using OpenAI GPT
+ * - Sentiment analysis and emotional tone detection
+ * - Key findings and methodology extraction
+ * - Export functionality (text and markdown formats)
+ * - Interactive sub-tabs for different analysis types
+ * - Real-time generation with loading states
+ * - Comprehensive error handling and fallbacks
+ * 
+ * @fileoverview Document analysis and summarization component
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState, useEffect } from 'react'
 import { FileText, Clock, Users, Target, Lightbulb, BookOpen, Download, RefreshCw, AlertCircle, CheckCircle, Brain } from 'lucide-react'
 import SentimentAnalysis from './SentimentAnalysis'
 
+/**
+ * Interface for summary data structure
+ */
 interface SummaryData {
   mainTopic: string
   keyFindings: string[]
@@ -17,6 +41,9 @@ interface SummaryData {
   complexity: string
 }
 
+/**
+ * Props interface for SummaryPanel component
+ */
 interface SummaryPanelProps {
   extractedText: string
   keywords: Array<{word: string, definition: string, context: string, isGPT?: boolean}>

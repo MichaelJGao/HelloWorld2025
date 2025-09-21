@@ -1,14 +1,34 @@
+/**
+ * MongoDB Database Connection Utility
+ * 
+ * This module provides MongoDB database connection management for the PDF Keyword
+ * Analyzer application. It handles both development and production environments
+ * with proper connection pooling and HMR (Hot Module Replacement) support.
+ * 
+ * Features:
+ * - Environment-specific connection handling
+ * - HMR support for development mode
+ * - Connection pooling and reuse
+ * - Database abstraction layer
+ * - Error handling and connection management
+ * 
+ * @fileoverview MongoDB connection utility with environment-specific handling
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 import { MongoClient, Db } from 'mongodb'
 
+// MongoDB connection URI with fallback for development
 const uri = process.env.MONGODB_URI || 'mongodb+srv://a:123@cluster0.lipbze4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 const options = {}
 
+// Client and promise variables for connection management
 let client: MongoClient
 let clientPromise: Promise<MongoClient>
 
 if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
+  // Development mode: Use global variable to preserve connection across HMR
   let globalWithMongo = global as typeof globalThis & {
     _mongoClientPromise?: Promise<MongoClient>
   }
@@ -19,15 +39,22 @@ if (process.env.NODE_ENV === 'development') {
   }
   clientPromise = globalWithMongo._mongoClientPromise
 } else {
-  // In production mode, it's best to not use a global variable.
+  // Production mode: Create new connection without global variable
   client = new MongoClient(uri, options)
   clientPromise = client.connect()
 }
 
-// Export a module-scoped MongoClient promise. By doing this in a
-// separate module, the client can be shared across functions.
+// Export the MongoDB client promise for use across the application
 export default clientPromise
 
+/**
+ * Gets the MongoDB database instance
+ * 
+ * This function returns the database instance for the PDF analyzer application.
+ * It uses the shared client connection to ensure efficient connection pooling.
+ * 
+ * @returns Promise resolving to MongoDB database instance
+ */
 export async function getDatabase(): Promise<Db> {
   const client = await clientPromise
   return client.db('pdf-analyzer')

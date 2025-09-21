@@ -1,3 +1,24 @@
+/**
+ * PDF Display Component
+ * 
+ * This component provides a comprehensive PDF viewing experience with advanced features
+ * including text extraction, keyword highlighting, search functionality, and interactive
+ * tooltips. It supports both PDF rendering and text view modes with seamless switching.
+ * 
+ * Key Features:
+ * - PDF.js integration for high-quality PDF rendering
+ * - Interactive keyword highlighting and tooltips
+ * - Text search and filtering capabilities
+ * - Zoom and pan controls for PDF navigation
+ * - Full-screen PDF viewing mode
+ * - Text selection and cross-referencing
+ * - Responsive design with dark mode support
+ * 
+ * @fileoverview Advanced PDF display component with interactive features
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
@@ -5,23 +26,50 @@ import { Eye, EyeOff, Download, Search, BookOpen, ChevronLeft, ChevronRight, Zoo
 import KeywordTooltip from './KeywordTooltip'
 import * as pdfjsLib from 'pdfjs-dist'
 
-// Configure PDF.js worker
+// Configure PDF.js worker for client-side PDF processing
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`
 
+/**
+ * Props interface for PDFDisplay component
+ */
 interface PDFDisplayProps {
   file: File | null
   extractedText: string
   keywords: Array<{ word: string; definition: string; context: string; isGPT?: boolean }>
 }
 
+/**
+ * PDFDisplay Component
+ * 
+ * Main component that renders PDF documents with advanced interactive features.
+ * Provides a dual-pane interface with PDF viewer and text view, along with
+ * comprehensive search, highlighting, and navigation capabilities.
+ * 
+ * State Management:
+ * - View modes: PDF view vs text view toggle
+ * - Search functionality with real-time filtering
+ * - Keyword highlighting and tooltip interactions
+ * - PDF navigation (page, zoom, pan)
+ * - Full-screen mode for enhanced viewing
+ * 
+ * @param file - PDF file to display
+ * @param extractedText - Text content extracted from PDF
+ * @param keywords - Array of detected keywords with definitions
+ * @returns JSX element containing the complete PDF display interface
+ */
 export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplayProps) {
+  // View and display state
   const [showTextView, setShowTextView] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredText, setFilteredText] = useState(extractedText)
+  
+  // Tooltip and interaction state
   const [hoveredKeyword, setHoveredKeyword] = useState<{ word: string; definition: string; context: string; isGPT?: boolean } | null>(null)
   const [selectedText, setSelectedText] = useState<string | null>(null)
   const [showTooltip, setShowTooltip] = useState(false)
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
+  
+  // PDF navigation state
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [pdfDocument, setPdfDocument] = useState<any>(null)
@@ -30,20 +78,26 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
   const [showPdfView, setShowPdfView] = useState(true)
   const [pdfPages, setPdfPages] = useState<string[]>([])
   const [currentZoomedPage, setCurrentZoomedPage] = useState<string | null>(null)
+  
+  // Text selection and highlighting state
   const [selectedTextFromPdf, setSelectedTextFromPdf] = useState<string | null>(null)
   const [highlightedTextId, setHighlightedTextId] = useState<string | null>(null)
+  const [highlightedText, setHighlightedText] = useState<string>('')
+  
   // PDF.js viewer state
   const [isPanning, setIsPanning] = useState(false)
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
-  const [highlightedText, setHighlightedText] = useState<string>('')
+  
+  // Full-screen mode state
   const [isFullScreenPdf, setIsFullScreenPdf] = useState(false)
   const [fullScreenZoom, setFullScreenZoom] = useState(1.0)
   const [fullScreenPanOffset, setFullScreenPanOffset] = useState({ x: 0, y: 0 })
   const [isFullScreenPanning, setIsFullScreenPanning] = useState(false)
   const [lastFullScreenPanPoint, setLastFullScreenPanPoint] = useState({ x: 0, y: 0 })
   
+  // Refs for DOM manipulation
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const textViewRef = useRef<HTMLDivElement>(null)
   const pdfContainerRef = useRef<HTMLDivElement>(null)

@@ -1,3 +1,24 @@
+/**
+ * Landing Page Component
+ * 
+ * This component provides an immersive and interactive landing page experience
+ * with advanced 3D animations, WebGL fluid simulations, and dynamic visual effects.
+ * It serves as the main entry point for the PDF Keyword Analyzer application.
+ * 
+ * Key Features:
+ * - Interactive 3D floating shapes with physics simulation
+ * - WebGL fluid simulation background effects
+ * - Mouse-responsive animations and parallax effects
+ * - Dynamic particle systems and energy effects
+ * - Responsive design with dark mode support
+ * - Smooth transitions and hover animations
+ * - Feature showcase with interactive cards
+ * 
+ * @fileoverview Interactive landing page with advanced visual effects
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
@@ -13,6 +34,9 @@ import WebGLFluidSimulation from './WebGLFluidSimulation'
 import LoginButton from './LoginButton'
 import UserMenu from './UserMenu'
 
+/**
+ * Props interface for LandingPage component
+ */
 interface LandingPageProps {
   onGetStarted: () => void
 }

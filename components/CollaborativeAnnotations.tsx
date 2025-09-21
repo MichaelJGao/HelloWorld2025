@@ -1,8 +1,31 @@
+/**
+ * Collaborative Annotations Component
+ * 
+ * This component provides collaborative annotation functionality for invited
+ * users viewing shared documents. It supports text selection, annotation
+ * creation, editing, and threaded discussions.
+ * 
+ * Key Features:
+ * - Text selection and annotation creation
+ * - Multiple annotation types (comment, highlight, question, suggestion)
+ * - Threaded replies and discussions
+ * - Edit and delete functionality
+ * - Real-time collaboration support
+ * - Error handling and loading states
+ * 
+ * @fileoverview Collaborative annotation system for invited users
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
 import { MessageSquare, Plus, Edit2, Trash2, Reply, Send, X, Check, AlertCircle } from 'lucide-react'
 
+/**
+ * Interface for annotation data structure
+ */
 interface Annotation {
   _id: string
   text: string
@@ -16,6 +39,9 @@ interface Annotation {
   replies: Reply[]
 }
 
+/**
+ * Interface for reply data structure
+ */
 interface Reply {
   _id: string
   text: string
@@ -25,12 +51,39 @@ interface Reply {
   updatedAt: string
 }
 
+/**
+ * Props interface for CollaborativeAnnotations component
+ */
 interface CollaborativeAnnotationsProps {
   token: string
   documentText: string
   onAnnotationAdd?: (annotation: Annotation) => void
 }
 
+/**
+ * Collaborative Annotations Component
+ * 
+ * This component renders the collaborative annotation interface for
+ * invited users with comprehensive annotation management capabilities.
+ * 
+ * State Management:
+ * - annotations: Array of all annotations for the document
+ * - selectedText: Currently selected text for annotation
+ * - showAnnotationForm: Controls annotation form visibility
+ * - annotationText: Text content for new annotation
+ * - annotationType: Type of annotation being created
+ * - editingAnnotation: ID of annotation being edited
+ * - editingReply: Reply being edited
+ * - replyingTo: Annotation ID for reply creation
+ * - replyText: Text content for new reply
+ * - loading: Loading state for API operations
+ * - error: Error message display
+ * 
+ * @param token - Invitation token for guest access
+ * @param documentText - Full text content of the document
+ * @param onAnnotationAdd - Callback when annotation is added
+ * @returns JSX element containing the collaborative annotation interface
+ */
 export default function CollaborativeAnnotations({ 
   token, 
   documentText, 

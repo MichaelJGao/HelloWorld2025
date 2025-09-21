@@ -1,18 +1,54 @@
+/**
+ * Authentication Error Page Component
+ * 
+ * This page displays authentication errors to users with appropriate
+ * error messages and recovery options. It handles various NextAuth.js
+ * error types and provides user-friendly error descriptions.
+ * 
+ * Key Features:
+ * - Dynamic error message display based on error type
+ * - User-friendly error descriptions
+ * - Recovery options (retry, go home)
+ * - Responsive design with dark mode support
+ * - Help text for troubleshooting
+ * 
+ * @fileoverview Authentication error page with error handling and recovery
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React from 'react'
 
-// Force dynamic rendering
+// Force dynamic rendering to ensure fresh error state
 export const dynamic = 'force-dynamic'
 import { useSearchParams } from 'next/navigation'
 import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
+/**
+ * Authentication Error Page Component
+ * 
+ * This component displays authentication errors with appropriate messaging
+ * and recovery options based on the error type from URL parameters.
+ * 
+ * @returns JSX element containing the error display interface
+ */
 export default function AuthError() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const error = searchParams.get('error')
 
+  /**
+   * Get user-friendly error message based on error type
+   * 
+   * Maps NextAuth.js error codes to human-readable error messages
+   * for better user experience and troubleshooting guidance.
+   * 
+   * @param error - Error code from URL parameters
+   * @returns Human-readable error message
+   */
   const getErrorMessage = (error: string | null) => {
     switch (error) {
       case 'Configuration':

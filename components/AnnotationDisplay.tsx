@@ -1,8 +1,31 @@
+/**
+ * Annotation Display Component
+ * 
+ * This component provides a floating display interface for viewing
+ * and managing existing annotations. It supports editing notes and
+ * deleting annotations with a clean, user-friendly interface.
+ * 
+ * Key Features:
+ * - Floating display with positioning
+ * - Annotation type indication (highlight/note)
+ * - Note editing functionality
+ * - Delete confirmation
+ * - Responsive positioning
+ * - Dark mode support
+ * 
+ * @fileoverview Floating annotation display and management interface
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState } from 'react'
 import { MessageSquare, Edit3, Trash2, X } from 'lucide-react'
 
+/**
+ * Interface for annotation data structure
+ */
 interface Annotation {
   _id: string
   type: 'highlight' | 'note'
@@ -19,6 +42,9 @@ interface Annotation {
   updatedAt: string
 }
 
+/**
+ * Props interface for AnnotationDisplay component
+ */
 interface AnnotationDisplayProps {
   annotation: Annotation
   onEdit: (annotation: Annotation) => void
@@ -27,6 +53,23 @@ interface AnnotationDisplayProps {
   onClose: () => void
 }
 
+/**
+ * Annotation Display Component
+ * 
+ * This component renders a floating display for viewing and managing
+ * existing annotations with edit and delete capabilities.
+ * 
+ * State Management:
+ * - isEditing: Controls note editing mode
+ * - editNote: Text content for note editing
+ * 
+ * @param annotation - Annotation data to display
+ * @param onEdit - Callback for editing annotation
+ * @param onDelete - Callback for deleting annotation
+ * @param position - Screen position for display placement
+ * @param onClose - Callback for closing the display
+ * @returns JSX element containing the annotation display interface
+ */
 export default function AnnotationDisplay({ 
   annotation, 
   onEdit, 
@@ -37,6 +80,9 @@ export default function AnnotationDisplay({
   const [isEditing, setIsEditing] = useState(false)
   const [editNote, setEditNote] = useState(annotation.note || '')
 
+  /**
+   * Handle saving edited annotation
+   */
   const handleSave = () => {
     onEdit({
       ...annotation,
@@ -45,12 +91,21 @@ export default function AnnotationDisplay({
     setIsEditing(false)
   }
 
+  /**
+   * Handle deleting annotation with confirmation
+   */
   const handleDelete = () => {
     if (confirm('Are you sure you want to delete this annotation?')) {
       onDelete(annotation._id)
     }
   }
 
+  /**
+   * Format date string for display
+   * 
+   * @param dateString - ISO date string
+   * @returns Formatted date string
+   */
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',

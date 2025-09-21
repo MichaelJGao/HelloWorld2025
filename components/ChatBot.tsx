@@ -1,8 +1,33 @@
+/**
+ * ChatBot Component
+ * 
+ * This component provides an AI-powered chat interface for interacting with PDF documents.
+ * It allows users to ask questions about document content and receive intelligent responses
+ * based on the PDF context and detected keywords.
+ * 
+ * Key Features:
+ * - AI-powered Q&A using OpenAI GPT-3.5-turbo
+ * - Context-aware responses based on PDF content
+ * - Real-time message handling with loading states
+ * - Floating chat interface with toggle functionality
+ * - Message history with timestamps
+ * - Keyboard shortcuts (Enter to send, Shift+Enter for new line)
+ * - Suggested questions for better user experience
+ * - Error handling and fallback responses
+ * 
+ * @fileoverview AI-powered chat interface for PDF document interaction
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, Loader2, MessageCircle } from 'lucide-react'
 
+/**
+ * Interface for chat message structure
+ */
 interface Message {
   id: string
   content: string
@@ -10,6 +35,9 @@ interface Message {
   timestamp: Date
 }
 
+/**
+ * Props interface for ChatBot component
+ */
 interface ChatBotProps {
   pdfContext: string
   keywords: Array<{word: string, definition: string, context: string, isGPT?: boolean}>

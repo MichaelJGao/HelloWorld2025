@@ -1,22 +1,57 @@
+/**
+ * API Route: Detect Keywords
+ * 
+ * This API endpoint uses advanced semantic analysis to detect and extract keywords
+ * from PDF text content. It employs multiple strategies including technical term
+ * detection, frequency analysis, and contextual importance scoring.
+ * 
+ * Features:
+ * - Semantic fingerprint analysis for document structure understanding
+ * - Multi-strategy keyword extraction (technical terms, phrases, domain-specific)
+ * - AI-powered definition generation using OpenAI GPT-4
+ * - Fallback to semantic analysis when AI is unavailable
+ * - Context-aware keyword scoring and ranking
+ * 
+ * @fileoverview API route for intelligent keyword detection from PDF text
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
+// Initialize OpenAI client for AI-powered definitions
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+/**
+ * POST /api/detect-keywords
+ * 
+ * Detects and extracts keywords from PDF text using semantic analysis.
+ * 
+ * Request Body:
+ * - text: string - The extracted text content from PDF
+ * 
+ * Response:
+ * - keywords: Array of keyword objects with word, definition, context, and isGPT flag
+ * 
+ * @param request - Next.js request object containing PDF text
+ * @returns JSON response with detected keywords and their definitions
+ */
 export async function POST(request: NextRequest) {
   try {
     const { text } = await request.json()
 
+    // Validate required input
     if (!text) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 })
     }
 
-    // Use semantic fingerprint-based keyword detection
+    // Use advanced semantic fingerprint-based keyword detection
     const keywords = await semanticFingerprintKeywordDetection(text)
     
-        return NextResponse.json({ keywords })
+    return NextResponse.json({ keywords })
 
   } catch (error) {
     console.error('Error detecting keywords:', error)
@@ -27,17 +62,35 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * Semantic Fingerprint Keyword Detection
+ * 
+ * This is the core function that performs advanced keyword detection using
+ * multiple semantic analysis strategies. It creates a "fingerprint" of the
+ * document to understand its structure and content, then applies various
+ * extraction strategies to identify the most important terms.
+ * 
+ * Process:
+ * 1. Clean and preprocess the text
+ * 2. Analyze document structure and semantic patterns
+ * 3. Apply multiple extraction strategies in parallel
+ * 4. Score and rank keywords by importance
+ * 5. Generate AI-powered definitions for top keywords
+ * 
+ * @param text - Raw text content from PDF
+ * @returns Promise resolving to array of keyword objects with definitions
+ */
 async function semanticFingerprintKeywordDetection(text: string): Promise<Array<{ word: string; definition: string; context: string; isGPT: boolean }>> {
   const keywords: Array<{ word: string; context: string; score: number }> = []
   const foundTerms = new Set<string>()
   
-  // Clean the text to remove non-content sections
+  // Clean the text to remove non-content sections (references, headers, etc.)
   const cleanText = cleanTextForKeywordDetection(text)
   
-  // Semantic fingerprint analysis
+  // Create semantic fingerprint to understand document structure and patterns
   const semanticFingerprint = analyzeSemanticFingerprint(cleanText)
   
-  // Extract keywords using multiple semantic strategies
+  // Apply multiple extraction strategies in parallel for comprehensive coverage
   const strategies = [
     () => extractTechnicalTerms(cleanText, semanticFingerprint),
     () => extractFrequentIntegralTerms(cleanText, semanticFingerprint),
@@ -47,6 +100,7 @@ async function semanticFingerprintKeywordDetection(text: string): Promise<Array<
     () => extractMultiWordPhrases(cleanText, semanticFingerprint)
   ]
   
+  // Execute all strategies and collect unique keywords
   strategies.forEach(strategy => {
     const extractedKeywords = strategy()
     extractedKeywords.forEach(keyword => {
@@ -65,7 +119,7 @@ async function semanticFingerprintKeywordDetection(text: string): Promise<Array<
   // Sort by semantic importance score (higher is better)
   uniqueKeywords.sort((a, b) => b.score - a.score)
   
-  // Return top 20 keywords with definitions and context
+  // Generate AI-powered definitions for top 20 keywords
   const keywordsWithDefinitions = await Promise.all(
     uniqueKeywords.slice(0, 20).map(async k => {
       const definitionResult = await generateDefinition(k.word, cleanText, semanticFingerprint)

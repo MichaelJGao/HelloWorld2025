@@ -1,3 +1,24 @@
+/**
+ * PDF Formatted Viewer Component
+ * 
+ * This component provides an advanced PDF viewing interface with structured
+ * content rendering, pagination, and enhanced formatting capabilities.
+ * It supports both structured PDF content and fallback text rendering.
+ * 
+ * Key Features:
+ * - Structured PDF content rendering with positioning
+ * - Pagination support for multi-page documents
+ * - Enhanced keyword highlighting
+ * - Image content support
+ * - Font and styling preservation
+ * - Search functionality with filtering
+ * - Responsive design with proper formatting
+ * 
+ * @fileoverview Advanced PDF viewer with structured content rendering
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
@@ -5,6 +26,9 @@ import { Search, Eye, EyeOff, Download, FileText, Image as ImageIcon } from 'luc
 import KeywordTooltip from './KeywordTooltip'
 import { PDFPageContent, PDFContentItem } from '@/lib/pdfProcessor'
 
+/**
+ * Props interface for PDFFormattedViewer component
+ */
 interface PDFFormattedViewerProps {
   file: File
   extractedText: string
@@ -12,6 +36,29 @@ interface PDFFormattedViewerProps {
   structuredContent?: PDFPageContent[]
 }
 
+/**
+ * PDF Formatted Viewer Component
+ * 
+ * This component renders an advanced PDF viewing interface with
+ * structured content support and enhanced formatting capabilities.
+ * 
+ * State Management:
+ * - showText: Controls text visibility toggle
+ * - searchTerm: Manages search functionality
+ * - selectedText: Currently selected text
+ * - tooltipPosition: Position for keyword tooltips
+ * - showTooltip: Controls tooltip visibility
+ * - hoveredKeyword: Currently hovered keyword data
+ * - currentPage: Current page number for pagination
+ * - totalPages: Total number of pages
+ * - filteredContent: Filtered content based on search
+ * 
+ * @param file - PDF file to display
+ * @param extractedText - Text content extracted from PDF
+ * @param keywords - Array of detected keywords with definitions
+ * @param structuredContent - Optional structured PDF content
+ * @returns JSX element containing the formatted PDF viewer interface
+ */
 export default function PDFFormattedViewer({ 
   file, 
   extractedText, 

@@ -1,3 +1,24 @@
+/**
+ * Saved Document Viewer Component
+ * 
+ * This component provides a comprehensive document viewing experience for
+ * saved PDF documents with advanced features including annotations, keyword
+ * highlighting, search functionality, and collaborative sharing.
+ * 
+ * Key Features:
+ * - Full document viewing with text extraction
+ * - Interactive keyword highlighting and tooltips
+ * - Collaborative annotation system
+ * - Search and filter functionality
+ * - Document sharing and invitation system
+ * - Real-time annotation updates
+ * - Responsive design with dark mode support
+ * 
+ * @fileoverview Comprehensive document viewer with collaborative features
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
@@ -7,6 +28,9 @@ import AnnotationToolbar from './AnnotationToolbar'
 import AnnotationDisplay from './AnnotationDisplay'
 import InviteModal from './InviteModal'
 
+/**
+ * Interface for saved document data structure
+ */
 interface SavedDocument {
   _id: string
   fileName: string
@@ -37,6 +61,9 @@ interface SavedDocument {
   tags: string[]
 }
 
+/**
+ * Interface for annotation data structure
+ */
 interface Annotation {
   _id: string
   text: string
@@ -56,6 +83,9 @@ interface Annotation {
   inviterEmail?: string
 }
 
+/**
+ * Interface for reply data structure
+ */
 interface Reply {
   _id: string
   text: string
@@ -65,11 +95,39 @@ interface Reply {
   updatedAt: string
 }
 
+/**
+ * Props interface for SavedDocumentViewer component
+ */
 interface SavedDocumentViewerProps {
   document: SavedDocument
   onClose: () => void
 }
 
+/**
+ * Saved Document Viewer Component
+ * 
+ * This component renders a comprehensive document viewing interface with
+ * advanced features for document analysis and collaboration.
+ * 
+ * State Management:
+ * - showText: Controls text visibility toggle
+ * - searchTerm: Manages search functionality
+ * - selectedText: Currently selected text for annotations
+ * - tooltipPosition: Position for keyword tooltips
+ * - showTooltip: Controls tooltip visibility
+ * - hoveredKeyword: Currently hovered keyword data
+ * - annotations: Array of document annotations
+ * - showAnnotationToolbar: Controls annotation toolbar visibility
+ * - annotationToolbarPosition: Position for annotation toolbar
+ * - selectedAnnotation: Currently selected annotation
+ * - annotationDisplayPosition: Position for annotation display
+ * - loading: Loading state for API operations
+ * - inviteModalOpen: Controls invitation modal visibility
+ * 
+ * @param document - Saved document data to display
+ * @param onClose - Callback function to close the viewer
+ * @returns JSX element containing the complete document viewer interface
+ */
 export default function SavedDocumentViewer({ document, onClose }: SavedDocumentViewerProps) {
   const [showText, setShowText] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')

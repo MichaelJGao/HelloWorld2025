@@ -1,8 +1,28 @@
+/**
+ * Sign In Page Component
+ * 
+ * This page provides authentication functionality for the PDF Keyword Analyzer
+ * application. It supports both Google OAuth and development credentials
+ * authentication with a modern, responsive UI design.
+ * 
+ * Key Features:
+ * - Google OAuth integration for production authentication
+ * - Development credentials provider for testing
+ * - Session checking and automatic redirects
+ * - Responsive design with dark mode support
+ * - Loading states and error handling
+ * - Feature showcase and privacy information
+ * 
+ * @fileoverview Authentication page with Google OAuth and development mode
+ * @author PDF Keyword Analyzer Team
+ * @version 1.0.0
+ */
+
 'use client'
 
 import React from 'react'
 
-// Force dynamic rendering
+// Force dynamic rendering to ensure fresh authentication state
 export const dynamic = 'force-dynamic'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -10,11 +30,29 @@ import { useEffect, useState } from 'react'
 import { FileText, ArrowLeft, Loader2 } from 'lucide-react'
 import ThemeToggle from '@/components/ThemeToggle'
 
+/**
+ * Sign In Page Component
+ * 
+ * This component renders the authentication interface with support for
+ * multiple authentication providers and development mode testing.
+ * 
+ * State Management:
+ * - loading: Controls button loading states during authentication
+ * - isCheckingSession: Manages initial session verification state
+ * 
+ * @returns JSX element containing the complete sign-in interface
+ */
 export default function SignIn() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [isCheckingSession, setIsCheckingSession] = useState(true)
 
+  /**
+   * Check for existing session on component mount
+   * 
+   * Automatically redirects authenticated users to the home page
+   * and shows the sign-in form for unauthenticated users.
+   */
   useEffect(() => {
     // Check if user is already signed in
     getSession().then((session) => {
@@ -26,6 +64,12 @@ export default function SignIn() {
     })
   }, [router])
 
+  /**
+   * Handle Google OAuth sign-in
+   * 
+   * Initiates Google OAuth flow with loading state management
+   * and error handling.
+   */
   const handleGoogleSignIn = async () => {
     setLoading(true)
     try {
@@ -37,6 +81,14 @@ export default function SignIn() {
     }
   }
 
+  /**
+   * Handle development credentials sign-in
+   * 
+   * Processes form submission for development mode authentication
+   * with any email/password combination for testing purposes.
+   * 
+   * @param e - Form submission event
+   */
   const handleCredentialsSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
