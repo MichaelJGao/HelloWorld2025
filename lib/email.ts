@@ -10,7 +10,7 @@ const createTransporter = () => {
     secure: false,
     auth: {
       user: 'adarshsiva297@gmail.com',
-      pass: 'mcbv pspd thxy pytv'
+      pass: ''
     },
     tls: {
       rejectUnauthorized: false
