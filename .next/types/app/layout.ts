@@ -1,4 +1,4 @@
-// File: /home/rishi/Desktop/hackathon/HelloWorld2025/app/layout.tsx
+// File: /Users/michaelgao/HelloWorld2025-3/app/layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

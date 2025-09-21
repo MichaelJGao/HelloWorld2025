@@ -40,7 +40,7 @@ export default function WebGLFluidSimulation({ mousePosition, isHovering }: WebG
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    const gl = (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null
     if (!gl) {
       console.error('WebGL not supported')
       return
@@ -181,7 +181,7 @@ export default function WebGLFluidSimulation({ mousePosition, isHovering }: WebG
         vry: (Math.random() - 0.5) * 3,
         vrz: (Math.random() - 0.5) * 3,
         size,
-        color: colors[Math.floor(Math.random() * colors.length)],
+        color: colors[Math.floor(Math.random() * colors.length)] as [number, number, number],
         type: types[Math.floor(Math.random() * types.length)],
         mass
       })
@@ -226,10 +226,10 @@ export default function WebGLFluidSimulation({ mousePosition, isHovering }: WebG
 
   // Generate geometry for different shapes
   const generateGeometry = (type: string, size: number) => {
-    const vertices = []
-    const colors = []
-    const normals = []
-    const indices = []
+    const vertices: number[] = []
+    const colors: number[] = []
+    const normals: number[] = []
+    const indices: number[] = []
 
     switch (type) {
       case 'cube':

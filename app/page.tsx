@@ -1,25 +1,35 @@
 'use client'
 
 import React, { useState } from 'react'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye, MessageCircle } from 'lucide-react'
+import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye, MessageCircle, History, Save } from 'lucide-react'
 import PDFDisplay from '@/components/PDFDisplay'
 import SummaryPanel from '@/components/SummaryPanel'
 import LandingPage from '@/components/LandingPage'
 import ThemeToggle from '@/components/ThemeToggle'
 import ChatBot from '@/components/ChatBot'
+import LoginButton from '@/components/LoginButton'
+import UserMenu from '@/components/UserMenu'
+import DocumentHistory from '@/components/DocumentHistory'
 import { extractTextFromPDF } from '@/lib/pdfProcessor'
 import { detectKeywords } from '@/lib/keywordDetector'
+import { useSession } from 'next-auth/react'
 
 export default function Home() {
+  const { data: session } = useSession()
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [extractedText, setExtractedText] = useState<string>('')
   const [keywords, setKeywords] = useState<Array<{word: string, definition: string, context: string}>>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string>('')
-  const [activeTab, setActiveTab] = useState<'viewer' | 'summary' | 'chat'>('viewer')
+  const [activeTab, setActiveTab] = useState<'viewer' | 'summary' | 'chat' | 'history'>('viewer')
   const [showLandingPage, setShowLandingPage] = useState(true)
   const [showChatBot, setShowChatBot] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -74,6 +84,45 @@ export default function Home() {
     multiple: false
   })
 
+  const saveDocument = async () => {
+    if (!session || !pdfFile || !extractedText) {
+      setSaveMessage('Please sign in and process a document first')
+      return
+    }
+
+    setIsSaving(true)
+    setSaveMessage('')
+
+    try {
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: pdfFile.name,
+          originalName: pdfFile.name,
+          fileSize: pdfFile.size,
+          fileType: pdfFile.type,
+          extractedText,
+          keywords
+        }),
+      })
+
+      if (response.ok) {
+        setSaveMessage('Document saved successfully!')
+        setTimeout(() => setSaveMessage(''), 3000)
+      } else {
+        setSaveMessage('Failed to save document')
+      }
+    } catch (error) {
+      console.error('Error saving document:', error)
+      setSaveMessage('Error saving document')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   // Show landing page if no file is uploaded
   if (showLandingPage) {
     return <LandingPage onGetStarted={() => setShowLandingPage(false)} />
@@ -92,8 +141,10 @@ export default function Home() {
                 <span className="group-hover:-translate-x-1 transition-transform duration-300">←</span>
                 <span className="ml-1">Back to Home</span>
               </button>
-              <div></div>
-              <ThemeToggle />
+              <div className="flex items-center space-x-3">
+                <UserMenu />
+                <ThemeToggle />
+              </div>
             </div>
             <div className="relative">
               <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -277,42 +328,72 @@ export default function Home() {
                     </div>
                   </div>
                   
-                  {/* Enhanced Tab Navigation */}
-                  <div className="flex items-center space-x-1 bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1.5">
-                    <button
-                      onClick={() => setActiveTab('viewer')}
-                      className={`flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-300 ${
-                        activeTab === 'viewer'
-                          ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-md transform scale-105'
-                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-600/50'
-                      }`}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Viewer
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('summary')}
-                      className={`flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-300 ${
-                        activeTab === 'summary'
-                          ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-md transform scale-105'
-                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-600/50'
-                      }`}
-                    >
-                      <BookOpen className="h-4 w-4 mr-2" />
-                      Summary
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('chat')}
-                      className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
-                        activeTab === 'chat'
-                          ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
-                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                    >
-                      <MessageCircle className="h-4 w-4 mr-1" />
-                      Chat
-                    </button>
-                  </div>
+                         {/* Enhanced Tab Navigation */}
+                         <div className="flex items-center space-x-1 bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1.5">
+                           <button
+                             onClick={() => setActiveTab('viewer')}
+                             className={`flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-300 ${
+                               activeTab === 'viewer'
+                                 ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-md transform scale-105'
+                                 : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-600/50'
+                             }`}
+                           >
+                             <Eye className="h-4 w-4 mr-2" />
+                             Viewer
+                           </button>
+                           <button
+                             onClick={() => setActiveTab('summary')}
+                             className={`flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-300 ${
+                               activeTab === 'summary'
+                                 ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-md transform scale-105'
+                                 : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-gray-600/50'
+                             }`}
+                           >
+                             <BookOpen className="h-4 w-4 mr-2" />
+                             Summary
+                           </button>
+                           <button
+                             onClick={() => setActiveTab('chat')}
+                             className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
+                               activeTab === 'chat'
+                                 ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                                 : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                             }`}
+                           >
+                             <MessageCircle className="h-4 w-4 mr-1" />
+                             Chat
+                           </button>
+                           <button
+                             onClick={() => setActiveTab('history')}
+                             className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
+                               activeTab === 'history'
+                                 ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                                 : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                             }`}
+                           >
+                             <History className="h-4 w-4 mr-1" />
+                             History
+                           </button>
+                         </div>
+                         
+                         {/* Save Button */}
+                         {session && extractedText && (
+                           <div className="flex items-center space-x-2">
+                             <button
+                               onClick={saveDocument}
+                               disabled={isSaving}
+                               className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+                             >
+                               <Save className="h-4 w-4 mr-2" />
+                               {isSaving ? 'Saving...' : 'Save Document'}
+                             </button>
+                             {saveMessage && (
+                               <span className={`text-sm ${saveMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>
+                                 {saveMessage}
+                               </span>
+                             )}
+                           </div>
+                         )}
                 </div>
                 
                 {activeTab === 'viewer' ? (
@@ -334,25 +415,29 @@ export default function Home() {
                       fileName={pdfFile.name}
                     />
                   </>
-                ) : (
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
-                    <div className="text-center py-12">
-                      <MessageCircle className="mx-auto h-16 w-16 text-primary-500 mb-4" />
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                        AI PDF Assistant
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
-                        Ask questions about your PDF content and get intelligent answers based on the document's context.
-                      </p>
-                      <button
-                        onClick={() => setShowChatBot(true)}
-                        className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                      >
-                        Start Chatting
-                      </button>
-                    </div>
-                  </div>
-                )}
+                       ) : activeTab === 'history' ? (
+                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
+                           <DocumentHistory />
+                         </div>
+                       ) : (
+                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
+                           <div className="text-center py-12">
+                             <MessageCircle className="mx-auto h-16 w-16 text-primary-500 mb-4" />
+                             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                               AI PDF Assistant
+                             </h3>
+                             <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
+                               Ask questions about your PDF content and get intelligent answers based on the document's context.
+                             </p>
+                             <button
+                               onClick={() => setShowChatBot(true)}
+                               className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                             >
+                               Start Chatting
+                             </button>
+                           </div>
+                         </div>
+                       )}
               </>
             )}
           </div>

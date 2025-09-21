@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 import WebGLFluidSimulation from './WebGLFluidSimulation'
+import LoginButton from './LoginButton'
+import UserMenu from './UserMenu'
 
 interface LandingPageProps {
   onGetStarted: () => void
@@ -172,13 +174,13 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
     const glowIntensity = 10 + mouseInfluence * 30
     const shadowColor = color + Math.floor(mouseInfluence * 100).toString(16).padStart(2, '0')
     
-    const commonStyle = {
+    const commonStyle: React.CSSProperties = {
       width: size,
       height: size,
       background: shape.wireframe ? 'transparent' : color,
       border: shape.wireframe ? `2px solid ${color}` : 'none',
       boxShadow: `0 0 ${glowIntensity}px ${shadowColor}`,
-      transformStyle: 'preserve-3d'
+      transformStyle: 'preserve-3d' as const
     }
 
     switch (shape.type) {
@@ -447,7 +449,14 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             </span>
           </div>
           <div className="flex items-center space-x-4">
+            <UserMenu />
             <ThemeToggle />
+            <a
+              href="/auth/signin"
+              className="px-4 py-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
+            >
+              Sign In
+            </a>
             <button
               onClick={onGetStarted}
               className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:shadow-lg transition-all duration-300 transform hover:scale-105"
@@ -466,7 +475,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
               <div 
                 className="inline-flex items-center px-6 py-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-full border border-blue-200 dark:border-gray-600 mb-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 style={{
-                  transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.02}px, ${(mousePosition.y - window.innerHeight / 2) * 0.02}px) scale(${isHovering ? 1.05 : 1})`
+                  transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1200) / 2) * 0.02}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 800) / 2) * 0.02}px) scale(${isHovering ? 1.05 : 1})`
                 }}
               >
                 <Sparkles className="w-5 h-5 text-yellow-500 mr-2 animate-pulse" />
@@ -476,7 +485,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
               <h1 
                 className="text-5xl md:text-7xl font-bold mb-6"
                 style={{
-                  transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.01}px, ${(mousePosition.y - window.innerHeight / 2) * 0.01}px)`
+                  transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1200) / 2) * 0.01}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 800) / 2) * 0.01}px)`
                 }}
               >
                 <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient">
@@ -489,7 +498,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
               <p 
                 className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed"
                 style={{
-                  transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.005}px, ${(mousePosition.y - window.innerHeight / 2) * 0.005}px)`
+                  transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1200) / 2) * 0.005}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 800) / 2) * 0.005}px)`
                 }}
               >
                 Transform your research workflow with AI-powered keyword detection, 
