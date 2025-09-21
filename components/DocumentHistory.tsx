@@ -16,6 +16,7 @@ import {
   Star,
   Share2
 } from 'lucide-react'
+import SavedDocumentViewer from './SavedDocumentViewer'
 
 interface Document {
   _id: string
@@ -41,6 +42,8 @@ export default function DocumentHistory() {
   const [filterTag, setFilterTag] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
   const [error, setError] = useState('')
+  const [viewingDocument, setViewingDocument] = useState<Document | null>(null)
+  const [loadingDocument, setLoadingDocument] = useState<string | null>(null)
 
   useEffect(() => {
     if (session) {
@@ -63,6 +66,25 @@ export default function DocumentHistory() {
       console.error('Error fetching documents:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const viewDocument = async (documentId: string) => {
+    try {
+      setLoadingDocument(documentId)
+      const response = await fetch(`/api/documents/${documentId}`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        setViewingDocument(data.document)
+      } else {
+        setError('Failed to load document')
+      }
+    } catch (err) {
+      setError('Error loading document')
+      console.error('Error loading document:', err)
+    } finally {
+      setLoadingDocument(null)
     }
   }
 
@@ -282,14 +304,16 @@ export default function DocumentHistory() {
                 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      // TODO: Implement view document functionality
-                      console.log('View document:', doc._id)
-                    }}
-                    className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    onClick={() => viewDocument(doc._id)}
+                    disabled={loadingDocument === doc._id}
+                    className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="View Document"
                   >
-                    <Eye className="h-4 w-4" />
+                    {loadingDocument === doc._id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                   
                   <button
@@ -304,6 +328,14 @@ export default function DocumentHistory() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Document Viewer Modal */}
+      {viewingDocument && (
+        <SavedDocumentViewer
+          document={viewingDocument}
+          onClose={() => setViewingDocument(null)}
+        />
       )}
     </div>
   )

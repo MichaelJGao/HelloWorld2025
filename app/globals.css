@@ -118,4 +118,13 @@
   .loading-dots > div:nth-child(3) {
     animation-delay: 0.4s;
   }
+
+  /* Keyword highlighting */
+  .keyword {
+    @apply bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 px-1 rounded cursor-pointer transition-colors;
+  }
+
+  .keyword:hover {
+    @apply bg-yellow-300 dark:bg-yellow-700;
+  }
 }
