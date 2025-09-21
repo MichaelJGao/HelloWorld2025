@@ -140,29 +140,6 @@ export default function Home() {
               </div>
             </div>
             
-            {/* Test Button to See Enhanced Processing Page */}
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => {
-                  setIsProcessing(true)
-                  // Simulate processing for 5 seconds
-                  setTimeout(() => {
-                    setIsProcessing(false)
-                    // Create a mock file for demonstration
-                    const mockFile = new File(['Mock PDF content'], 'demo.pdf', { type: 'application/pdf' })
-                    setPdfFile(mockFile)
-                    setExtractedText('This is a demo PDF content with some sample text for testing the enhanced processing page. It contains various keywords and concepts that can be analyzed by our AI system.')
-                    setKeywords([
-                      { word: 'AI', definition: 'Artificial Intelligence', context: 'AI system' },
-                      { word: 'processing', definition: 'The act of handling data', context: 'processing page' }
-                    ])
-                  }, 5000)
-                }}
-                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 font-medium shadow-lg hover:shadow-xl"
-              >
-                🎨 See Enhanced Processing Page
-              </button>
-            </div>
             
             {error && (
               <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center animate-slide-up">
