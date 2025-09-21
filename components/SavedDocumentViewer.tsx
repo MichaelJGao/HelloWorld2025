@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Eye, EyeOff, Download, Search, X, FileText, Save, MessageSquare } from 'lucide-react'
+import { Eye, EyeOff, Download, Search, X, FileText, Save, MessageSquare, Share2 } from 'lucide-react'
 import KeywordTooltip from './KeywordTooltip'
 import AnnotationToolbar from './AnnotationToolbar'
 import AnnotationDisplay from './AnnotationDisplay'
+import InviteModal from './InviteModal'
 
 interface SavedDocument {
   _id: string
@@ -70,6 +71,7 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
   const [selectedAnnotation, setSelectedAnnotation] = useState<Annotation | null>(null)
   const [annotationDisplayPosition, setAnnotationDisplayPosition] = useState({ x: 0, y: 0 })
   const [loading, setLoading] = useState(false)
+  const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const textRef = useRef<HTMLDivElement>(null)
 
   // Load annotations when component mounts
@@ -368,6 +370,14 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
               {annotations.length} annotation{annotations.length !== 1 ? 's' : ''}
             </div>
             <button
+              onClick={() => setInviteModalOpen(true)}
+              className="flex items-center px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              title="Share Document"
+            >
+              <Share2 className="h-4 w-4 mr-1" />
+              Share
+            </button>
+            <button
               onClick={loadAnnotations}
               className="flex items-center px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
               title="Refresh annotations"
@@ -539,6 +549,14 @@ export default function SavedDocumentViewer({ document, onClose }: SavedDocument
             onClose={() => setSelectedAnnotation(null)}
           />
         )}
+
+        {/* Invite Modal */}
+        <InviteModal
+          isOpen={inviteModalOpen}
+          onClose={() => setInviteModalOpen(false)}
+          documentId={document._id}
+          documentName={document.originalName}
+        />
       </div>
     </div>
   )

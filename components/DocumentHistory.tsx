@@ -17,6 +17,7 @@ import {
   Share2
 } from 'lucide-react'
 import SavedDocumentViewer from './SavedDocumentViewer'
+import InviteModal from './InviteModal'
 
 interface Document {
   _id: string
@@ -44,6 +45,8 @@ export default function DocumentHistory() {
   const [error, setError] = useState('')
   const [viewingDocument, setViewingDocument] = useState<Document | null>(null)
   const [loadingDocument, setLoadingDocument] = useState<string | null>(null)
+  const [inviteModalOpen, setInviteModalOpen] = useState(false)
+  const [selectedDocumentForInvite, setSelectedDocumentForInvite] = useState<Document | null>(null)
 
   useEffect(() => {
     if (session) {
@@ -107,6 +110,16 @@ export default function DocumentHistory() {
       setError('Error deleting document')
       console.error('Error deleting document:', err)
     }
+  }
+
+  const openInviteModal = (document: Document) => {
+    setSelectedDocumentForInvite(document)
+    setInviteModalOpen(true)
+  }
+
+  const closeInviteModal = () => {
+    setInviteModalOpen(false)
+    setSelectedDocumentForInvite(null)
   }
 
   const formatFileSize = (bytes: number) => {
@@ -317,6 +330,14 @@ export default function DocumentHistory() {
                   </button>
                   
                   <button
+                    onClick={() => openInviteModal(doc)}
+                    className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                    title="Share Document"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
+                  
+                  <button
                     onClick={() => deleteDocument(doc._id)}
                     className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     title="Delete Document"
@@ -335,6 +356,16 @@ export default function DocumentHistory() {
         <SavedDocumentViewer
           document={viewingDocument}
           onClose={() => setViewingDocument(null)}
+        />
+      )}
+
+      {/* Invite Modal */}
+      {selectedDocumentForInvite && (
+        <InviteModal
+          isOpen={inviteModalOpen}
+          onClose={closeInviteModal}
+          documentId={selectedDocumentForInvite._id}
+          documentName={selectedDocumentForInvite.originalName}
         />
       )}
     </div>

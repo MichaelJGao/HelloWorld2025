@@ -1,9 +1,13 @@
 {
-  "/not-found": "app/not-found.js",
-  "/page": "app/page.js",
-  "/settings/page": "app/settings/page.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/detect-keywords/route": "app/api/detect-keywords/route.js",
-  "/api/chat/route": "app/api/chat/route.js",
-  "/api/documents/route": "app/api/documents/route.js"
+  "/documents/invite/[token]/page": "app/documents/invite/[token]/page.js",
+  "/api/generate-summary/route": "app/api/generate-summary/route.js",
+  "/page": "app/page.js",
+  "/api/search-image/route": "app/api/search-image/route.js",
+  "/api/documents/route": "app/api/documents/route.js",
+  "/api/documents/[id]/route": "app/api/documents/[id]/route.js",
+  "/api/documents/[id]/annotations/route": "app/api/documents/[id]/annotations/route.js",
+  "/api/documents/[id]/invite/route": "app/api/documents/[id]/invite/route.js",
+  "/api/generate-document-summary/route": "app/api/generate-document-summary/route.js",
+  "/api/analyze-sentiment/route": "app/api/analyze-sentiment/route.js"
 }

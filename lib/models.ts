@@ -100,3 +100,20 @@ export interface DocumentAnnotation {
   createdAt: Date
   updatedAt: Date
 }
+
+export interface DocumentInvite {
+  _id?: ObjectId
+  documentId: ObjectId
+  inviterId: ObjectId
+  inviterEmail: string
+  inviterName: string
+  inviteeEmail: string
+  inviteeName?: string
+  message?: string
+  token: string
+  expiresAt: Date
+  isUsed: boolean
+  usedAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
