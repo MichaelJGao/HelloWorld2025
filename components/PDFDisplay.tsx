@@ -1,20 +1,19 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { Eye, EyeOff, Download, Search, BookOpen, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Move } from 'lucide-react'
+import { Eye, EyeOff, Download, Search, BookOpen, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Move, Edit3, Save, X, Highlighter, Type, Square, PenTool, MessageSquare, Pin } from 'lucide-react'
 import KeywordTooltip from './KeywordTooltip'
 import * as pdfjsLib from 'pdfjs-dist'
-
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`
 
 interface PDFDisplayProps {
   file: File | null
   extractedText: string
   keywords: Array<{ word: string; definition: string; context: string }>
+  isAnnotating?: boolean
+  setIsAnnotating?: (value: boolean) => void
 }
 
-export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplayProps) {
+export default function PDFDisplay({ file, extractedText, keywords, isAnnotating = false, setIsAnnotating }: PDFDisplayProps) {
   const [showTextView, setShowTextView] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredText, setFilteredText] = useState(extractedText)
@@ -22,26 +21,30 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
   const [selectedText, setSelectedText] = useState<string | null>(null)
   const [showTooltip, setShowTooltip] = useState(false)
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
+  const [showPdfView, setShowPdfView] = useState(true)
+  const [selectedTextFromPdf, setSelectedTextFromPdf] = useState<string | null>(null)
+  const [highlightedText, setHighlightedText] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [pdfDocument, setPdfDocument] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [zoom, setZoom] = useState(1.0)
-  const [showPdfView, setShowPdfView] = useState(true)
-  const [pdfPages, setPdfPages] = useState<string[]>([])
-  const [currentZoomedPage, setCurrentZoomedPage] = useState<string | null>(null)
-  const [selectedTextFromPdf, setSelectedTextFromPdf] = useState<string | null>(null)
-  const [highlightedTextId, setHighlightedTextId] = useState<string | null>(null)
-  // PDF.js viewer state
   const [isPanning, setIsPanning] = useState(false)
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = useState(false)
-  const [highlightedText, setHighlightedText] = useState<string>('')
+  
+  // Annotation states
+  const [annotationMode, setAnnotationMode] = useState<'none' | 'highlight' | 'underline' | 'strikeout' | 'rectangle' | 'drawing' | 'comment' | 'pin' | 'text'>('none')
+  const [annotations, setAnnotations] = useState<any[]>([])
+  const [selectionRect, setSelectionRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [drawingPath, setDrawingPath] = useState<{ x: number; y: number }[]>([])
+  const [showCommentBox, setShowCommentBox] = useState(false)
+  const [commentText, setCommentText] = useState('')
+  const [commentPosition, setCommentPosition] = useState<{ x: number; y: number } | null>(null)
   
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const textViewRef = useRef<HTMLDivElement>(null)
-  const pdfContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setFilteredText(extractedText)
@@ -56,68 +59,41 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
     }
   }, [searchTerm, extractedText])
 
+  // Load PDF document when file changes
   useEffect(() => {
     if (file) {
       loadPdfDocument(file)
     }
   }, [file])
 
-  // Initialize zoomed page when PDF loads
-
-
   const loadPdfDocument = async (pdfFile: File) => {
     setIsLoading(true)
     try {
+      // Configure PDF.js worker only in browser environment
+      if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`
+      }
+
       console.log('Loading PDF:', pdfFile.name, 'Size:', pdfFile.size)
       const arrayBuffer = await pdfFile.arrayBuffer()
       
       const pdf = await pdfjsLib.getDocument({ 
         data: arrayBuffer,
         cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
-        cMapPacked: true
+        cMapPacked: true,
+        useSystemFonts: true,
+        disableFontFace: true
       }).promise
       
       console.log('PDF loaded successfully, pages:', pdf.numPages)
       setPdfDocument(pdf)
       setTotalPages(pdf.numPages)
-      
-      // Pre-render all pages as images for simple display
-      await renderAllPages(pdf)
+      setCurrentPage(1)
+      setIsLoading(false)
     } catch (error) {
       console.error('Error loading PDF:', error)
-      setPdfDocument(null)
-      setTotalPages(0)
-    } finally {
       setIsLoading(false)
     }
-  }
-
-  const renderAllPages = async (pdf: any) => {
-    const pages: string[] = []
-    
-    for (let i = 1; i <= pdf.numPages; i++) {
-      try {
-        const page = await pdf.getPage(i)
-        const viewport = page.getViewport({ scale: 1.5 })
-        const canvas = document.createElement('canvas')
-        const context = canvas.getContext('2d')!
-        
-        canvas.height = viewport.height
-        canvas.width = viewport.width
-
-        await page.render({
-          canvasContext: context,
-          viewport: viewport,
-        }).promise
-        
-        pages.push(canvas.toDataURL())
-        console.log(`Rendered page ${i}`)
-      } catch (error) {
-        console.error(`Error rendering page ${i}:`, error)
-      }
-    }
-    
-    setPdfPages(pages)
   }
 
   const renderPage = useCallback(async (pageNum: number) => {
@@ -157,22 +133,43 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
   }
 
   const handleZoom = (newZoom: number) => {
-    setZoom(newZoom)
-    // Reset pan offset when zooming
+    const clampedZoom = Math.max(0.5, Math.min(3, newZoom))
+    setZoom(clampedZoom)
     setPanOffset({ x: 0, y: 0 })
   }
 
   // Panning functionality
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && e.ctrlKey)) { // Middle mouse or Ctrl+left click
+    if (isAnnotating) {
+      if (annotationMode === 'drawing') {
+        setIsDrawing(true)
+        const rect = canvasRef.current?.getBoundingClientRect()
+        if (rect) {
+          setDrawingPath([{ x: e.clientX - rect.left, y: e.clientY - rect.top }])
+        }
+      } else if (annotationMode === 'pin' || annotationMode === 'comment') {
+        const rect = canvasRef.current?.getBoundingClientRect()
+        if (rect) {
+          setCommentPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+          setShowCommentBox(true)
+        }
+      }
+    } else {
+      if (e.button === 1 || e.button === 0) {
       setIsPanning(true)
       setLastPanPoint({ x: e.clientX, y: e.clientY })
       e.preventDefault()
+      }
     }
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isPanning) {
+    if (isAnnotating && isDrawing && annotationMode === 'drawing') {
+      const rect = canvasRef.current?.getBoundingClientRect()
+      if (rect) {
+        setDrawingPath(prev => [...prev, { x: e.clientX - rect.left, y: e.clientY - rect.top }])
+      }
+    } else if (isPanning) {
       const deltaX = e.clientX - lastPanPoint.x
       const deltaY = e.clientY - lastPanPoint.y
       
@@ -186,6 +183,13 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
   }
 
   const handleMouseUp = () => {
+    if (isAnnotating && isDrawing && annotationMode === 'drawing') {
+      setIsDrawing(false)
+      if (drawingPath.length > 1) {
+        addDrawingAnnotation(drawingPath)
+      }
+      setDrawingPath([])
+    }
     setIsPanning(false)
   }
 
@@ -236,13 +240,28 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
       const text = selection.toString().trim()
       console.log('PDF text selected:', text)
       setSelectedTextFromPdf(text)
+      setSelectedText(text)
       
+      if (isAnnotating && annotationMode !== 'none') {
+        // Get selection rectangle for annotations
+        const range = selection.getRangeAt(0)
+        const rect = range.getBoundingClientRect()
+        const canvasRect = canvasRef.current?.getBoundingClientRect()
+        
+        if (canvasRect) {
+          setSelectionRect({
+            x: rect.left - canvasRect.left,
+            y: rect.top - canvasRect.top,
+            width: rect.width,
+            height: rect.height
+          })
+        }
+      } else {
       // Find and highlight this text in the Text View
       findAndHighlightTextInTextView(text)
       
       // Also show tooltip for the selected text
       const enhancedContext = getEnhancedContext(text, extractedText, 150)
-      setSelectedText(text)
       setHoveredKeyword(null)
       const range = selection.getRangeAt(0)
       const rect = range.getBoundingClientRect()
@@ -251,6 +270,7 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
         y: rect.top + window.scrollY - 10,
       })
       setShowTooltip(true)
+      }
     } else {
       console.log('No text selected or selection is empty')
     }
@@ -313,7 +333,7 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
     if (searchIndex !== -1) {
       // Create a unique ID for this highlight
       const highlightId = `highlight-${Date.now()}`
-      setHighlightedTextId(highlightId)
+      // setHighlightedTextId(highlightId) // Removed - no longer needed
       
       // Scroll to the text view first
       textViewRef.current.scrollIntoView({ 
@@ -406,6 +426,99 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
     }
   }
 
+  // Annotation functions
+  const addAnnotation = (type: string) => {
+    if (selectedText && selectionRect) {
+      const annotation = {
+        id: Date.now().toString(),
+        type: type,
+        text: selectedText,
+        x: selectionRect.x,
+        y: selectionRect.y,
+        width: selectionRect.width,
+        height: selectionRect.height,
+        pageNumber: currentPage,
+        color: getAnnotationColor(type)
+      }
+      
+      setAnnotations(prev => [...prev, annotation])
+      setSelectedText('')
+      setSelectionRect(null)
+      
+      // Clear selection
+      window.getSelection()?.removeAllRanges()
+    }
+  }
+
+  const addDrawingAnnotation = (path: { x: number; y: number }[]) => {
+    if (path.length > 1) {
+      const minX = Math.min(...path.map(p => p.x))
+      const maxX = Math.max(...path.map(p => p.x))
+      const minY = Math.min(...path.map(p => p.y))
+      const maxY = Math.max(...path.map(p => p.y))
+      
+      const annotation = {
+        id: Date.now().toString(),
+        type: 'drawing',
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+        pageNumber: currentPage,
+        color: '#ff0000',
+        comment: JSON.stringify(path)
+      }
+      
+      setAnnotations(prev => [...prev, annotation])
+    }
+  }
+
+  const addCommentAnnotation = () => {
+    if (commentPosition && commentText.trim()) {
+      const annotation = {
+        id: Date.now().toString(),
+        type: 'comment',
+        x: commentPosition.x,
+        y: commentPosition.y,
+        width: 20,
+        height: 20,
+        pageNumber: currentPage,
+        color: '#007bff',
+        comment: commentText
+      }
+      
+      setAnnotations(prev => [...prev, annotation])
+      setShowCommentBox(false)
+      setCommentText('')
+      setCommentPosition(null)
+    }
+  }
+
+  const getAnnotationColor = (type: string): string => {
+    switch (type) {
+      case 'highlight': return '#ffff00'
+      case 'underline': return '#00ff00'
+      case 'strikeout': return '#ff0000'
+      case 'rectangle': return '#0000ff'
+      case 'drawing': return '#ff00ff'
+      case 'comment': return '#007bff'
+      case 'pin': return '#ff6600'
+      case 'text': return '#333333'
+      default: return '#ffff00'
+    }
+  }
+
+  const deleteAnnotation = (annotationId: string) => {
+    setAnnotations(prev => prev.filter(h => h.id !== annotationId))
+  }
+
+  const saveAnnotations = () => {
+    // Here you would typically save the annotations to a file or server
+    console.log('Saving annotations:', annotations)
+    // For now, we'll just show an alert
+    alert(`Saved ${annotations.length} annotations!`)
+  }
+
   const getEnhancedContext = (word: string, text: string, contextLength: number = 150): string => {
     const index = text.toLowerCase().indexOf(word.toLowerCase())
     if (index === -1) return text.substring(0, contextLength)
@@ -460,57 +573,10 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
             <h3 className="text-xl font-semibold text-gray-800 dark:text-white">Document View</h3>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowPdfView(!showPdfView)}
-              className="group px-4 py-2 text-sm bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:from-blue-200 hover:to-purple-200 dark:hover:from-blue-800/40 dark:hover:to-purple-800/40 transition-all duration-300 transform hover:scale-105 font-medium"
-            >
-              <span className="flex items-center">
-                {showPdfView ? (
-                  <>
-                    <BookOpen className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                    Show Text
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                    Show PDF
-                  </>
-                )}
-              </span>
-            </button>
+            {/* Annotation button moved to Text View section */}
           </div>
         </div>
 
-        {/* Enhanced PDF Controls */}
-        <div className="flex items-center justify-between mb-6 p-4 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-700/50 dark:to-blue-900/20 rounded-xl border border-gray-200/50 dark:border-gray-600/50">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage <= 1}
-              className="group p-2.5 rounded-xl bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md"
-            >
-              <ChevronLeft className="h-4 w-4 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
-            </button>
-            <div className="flex items-center px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[80px] text-center">
-                {currentPage} of {totalPages}
-              </span>
-            </div>
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-              className="group p-2.5 rounded-xl bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md"
-            >
-              <ChevronRight className="h-4 w-4 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
-            </button>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-medium">
-              <span>Ctrl+Scroll to zoom, Ctrl+Click to pan</span>
-            </div>
-          </div>
-        </div>
 
         {/* Highlighted Text Display */}
         {highlightedText && (
@@ -521,131 +587,394 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
         )}
 
 
-        {isLoading ? (
-          <div className="text-center py-16">
-            <div className="relative mb-8">
-              <div className="w-24 h-24 mx-auto bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl animate-pulse">
-                <div className="animate-spin rounded-full h-14 w-14 border-4 border-white border-t-transparent"></div>
-              </div>
-              <div className="absolute -top-3 -right-3 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-bounce"></div>
-              <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-gradient-to-r from-green-400 to-blue-500 rounded-full animate-ping"></div>
-            </div>
-            
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Loading PDF
-            </h3>
-            <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">Rendering document pages for optimal viewing...</p>
-            
-            {/* Loading Steps */}
-            <div className="max-w-sm mx-auto mb-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-center p-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50">
-                  <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3">
-                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Initializing PDF renderer</span>
-                </div>
-                
-                <div className="flex items-center justify-center p-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50">
-                  <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
-                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Processing document structure</span>
-                </div>
-                
-                <div className="flex items-center justify-center p-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-200/50 dark:border-gray-700/50">
-                  <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mr-3">
-                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                  </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Rendering pages</span>
+        {showPdfView ? (
+          <div className={`border border-gray-200 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 ${isAnnotating ? 'fixed inset-0 z-50 min-h-screen' : 'min-h-[600px]'}`}>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[600px] text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400 dark:text-gray-500 animate-pulse" />
+                  <p>Loading PDF...</p>
                 </div>
               </div>
-            </div>
-            
-            <div className="flex justify-center items-center space-x-2 text-primary-600 dark:text-primary-400">
-              <div className="loading-dots">
-                <div></div>
-                <div></div>
-                <div></div>
-              </div>
-              <span className="text-sm font-medium ml-2">Almost ready...</span>
-            </div>
+            ) : pdfDocument ? (
+              <div className={`w-full ${isAnnotating ? 'h-screen' : 'h-[600px]'} relative overflow-auto bg-gray-100 dark:bg-gray-900`}>
+                {/* Annotation Toolbar */}
+                {isAnnotating && (
+                  <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 p-4">
+                    <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 mr-4">Annotation Tools:</span>
+            <button
+                          onClick={() => setAnnotationMode('none')}
+                          className={`p-2 rounded-lg border ${annotationMode === 'none' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                          title="Select Tool"
+                        >
+                          <Move className="h-4 w-4" />
+            </button>
+            <button
+                          onClick={() => setAnnotationMode('highlight')}
+                          className={`p-2 rounded-lg border ${annotationMode === 'highlight' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                          title="Highlight"
+                        >
+                          <Highlighter className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setAnnotationMode('underline')}
+                          className={`p-2 rounded-lg border ${annotationMode === 'underline' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                          title="Underline"
+                        >
+                          <Type className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setAnnotationMode('strikeout')}
+                          className={`p-2 rounded-lg border ${annotationMode === 'strikeout' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                          title="Strikeout"
+                        >
+                          <Type className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setAnnotationMode('rectangle')}
+                          className={`p-2 rounded-lg border ${annotationMode === 'rectangle' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                          title="Rectangle"
+                        >
+                          <Square className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setAnnotationMode('drawing')}
+                          className={`p-2 rounded-lg border ${annotationMode === 'drawing' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                          title="Draw"
+                        >
+                          <PenTool className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setAnnotationMode('comment')}
+                          className={`p-2 rounded-lg border ${annotationMode === 'comment' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                          title="Comment"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setAnnotationMode('pin')}
+                          className={`p-2 rounded-lg border ${annotationMode === 'pin' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                          title="Pin"
+                        >
+                          <Pin className="h-4 w-4" />
+            </button>
           </div>
-        ) : showPdfView ? (
-          <div 
-            ref={pdfContainerRef}
-            className="relative border-2 border-gray-200 dark:border-gray-600 shadow-xl bg-white dark:bg-gray-900 overflow-hidden max-h-[70vh] rounded-xl"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onWheel={handleWheel}
-            style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
-          >
-            {/* PDF Controls Overlay */}
-            <div className="absolute top-2 right-2 z-10 flex gap-1">
+          
+          <div className="flex items-center gap-2">
+                        <button
+                          onClick={saveAnnotations}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2"
+                        >
+                          <Save className="h-4 w-4" />
+                          Save Changes
+                        </button>
+                        <button
+                          onClick={() => setIsAnnotating?.(false)}
+                          className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex items-center gap-2"
+                        >
+                          <X className="h-4 w-4" />
+                          Exit
+                        </button>
+        </div>
+        </div>
+          </div>
+        )}
+
+        {/* PDF Controls */}
+                <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center gap-4">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage <= 1}
+                      className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+                    
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Page {currentPage} of {totalPages}
+            </span>
+                    
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+                      className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 dark:text-gray-300"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-2">
               <button
-                onClick={() => handleZoom(Math.max(0.5, zoom - 0.25))}
-                className="p-1 bg-white bg-opacity-90 rounded shadow-sm hover:bg-opacity-100 transition-all"
-                title="Zoom Out"
+                      onClick={() => handleZoom(zoom - 0.25)}
+                      className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
               >
                 <ZoomOut className="h-4 w-4" />
               </button>
-              <span className="px-2 py-1 bg-white bg-opacity-90 rounded shadow-sm text-xs font-medium">
+                    
+                    <span className="text-sm text-gray-600 dark:text-gray-400 min-w-[60px] text-center">
                 {Math.round(zoom * 100)}%
               </span>
+                    
               <button
-                onClick={() => handleZoom(Math.min(3, zoom + 0.25))}
-                className="p-1 bg-white bg-opacity-90 rounded shadow-sm hover:bg-opacity-100 transition-all"
-                title="Zoom In"
+                      onClick={() => handleZoom(zoom + 0.25)}
+                      className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
               >
                 <ZoomIn className="h-4 w-4" />
               </button>
+                    
               <button
                 onClick={() => {
                   setZoom(1)
                   setPanOffset({ x: 0, y: 0 })
                 }}
-                className="p-1 bg-white bg-opacity-90 rounded shadow-sm hover:bg-opacity-100 transition-all"
+                      className="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                 title="Reset View"
               >
                 <Move className="h-4 w-4" />
               </button>
             </div>
-            
-            {/* Pan indicator */}
-            {isPanning && (
-              <div className="absolute bottom-2 left-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs">
-                Panning...
               </div>
-            )}
-            
+
+                <div 
+                  className="relative w-full h-[500px] overflow-auto bg-gray-100 dark:bg-gray-900"
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={(e) => {
+                    handleMouseUp()
+                    handlePdfTextSelection()
+                  }}
+                  onWheel={handleWheel}
+                  style={{ cursor: isPanning ? 'grabbing' : (isAnnotating && annotationMode === 'drawing' ? 'crosshair' : 'grab') }}
+                >
             {/* Canvas container with pan offset */}
             <div 
-              className="flex justify-center items-center min-h-[400px]"
+                    className="flex justify-center items-center min-h-[500px]"
               style={{
                 transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
                 transition: isPanning ? 'none' : 'transform 0.1s ease-out'
               }}
             >
+                    <div className="relative">
               <canvas
                 ref={canvasRef}
-                className="border border-gray-300 shadow-sm"
-                onMouseUp={handleTextSelection}
-              />
+                        className="border border-gray-300 dark:border-gray-600 shadow-sm"
+                      />
+                      
+                      {/* Annotations */}
+                      {annotations
+                        .filter(annotation => annotation.pageNumber === currentPage)
+                        .map(annotation => (
+                          <div key={annotation.id}>
+                            {annotation.type === 'highlight' && (
+                              <div
+                                className="absolute bg-yellow-200 bg-opacity-50 border border-yellow-400 cursor-pointer group"
+                                style={{
+                                  left: annotation.x + 'px',
+                                  top: annotation.y + 'px',
+                                  width: annotation.width + 'px',
+                                  height: annotation.height + 'px',
+                                }}
+                                onClick={() => deleteAnnotation(annotation.id)}
+                                title={`${annotation.text} (Click to delete)`}
+                              >
+                                <div className="absolute -top-6 left-0 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {annotation.text?.substring(0, 30)}...
+                                </div>
+                              </div>
+                            )}
+                            
+                            {annotation.type === 'underline' && (
+                              <div
+                                className="absolute border-b-2 border-green-500 cursor-pointer"
+                                style={{
+                                  left: annotation.x + 'px',
+                                  top: annotation.y + annotation.height - 2 + 'px',
+                                  width: annotation.width + 'px',
+                                  height: '2px',
+                                }}
+                                onClick={() => deleteAnnotation(annotation.id)}
+                                title="Underline (Click to delete)"
+                              />
+                            )}
+                            
+                            {annotation.type === 'strikeout' && (
+                              <div
+                                className="absolute border-t-2 border-red-500 cursor-pointer"
+                                style={{
+                                  left: annotation.x + 'px',
+                                  top: annotation.y + annotation.height / 2 + 'px',
+                                  width: annotation.width + 'px',
+                                  height: '2px',
+                                }}
+                                onClick={() => deleteAnnotation(annotation.id)}
+                                title="Strikeout (Click to delete)"
+                              />
+                            )}
+                            
+                            {annotation.type === 'rectangle' && (
+                              <div
+                                className="absolute border-2 border-blue-500 bg-blue-100 bg-opacity-30 cursor-pointer"
+                                style={{
+                                  left: annotation.x + 'px',
+                                  top: annotation.y + 'px',
+                                  width: annotation.width + 'px',
+                                  height: annotation.height + 'px',
+                                }}
+                                onClick={() => deleteAnnotation(annotation.id)}
+                                title="Rectangle (Click to delete)"
+                              />
+                            )}
+                            
+                            {annotation.type === 'comment' && (
+                              <div
+                                className="absolute cursor-pointer group"
+                                style={{
+                                  left: annotation.x + 'px',
+                                  top: annotation.y + 'px',
+                                }}
+                                onClick={() => deleteAnnotation(annotation.id)}
+                              >
+                                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
+                                  💬
+                                </div>
+                                <div className="absolute top-6 left-0 bg-white border border-gray-300 rounded-lg shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity max-w-xs">
+                                  <div className="text-xs text-gray-700">{annotation.comment}</div>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {annotation.type === 'pin' && (
+                              <div
+                                className="absolute cursor-pointer group"
+                                style={{
+                                  left: annotation.x + 'px',
+                                  top: annotation.y + 'px',
+                                }}
+                                onClick={() => deleteAnnotation(annotation.id)}
+                              >
+                                <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs">
+                                  📌
+                                </div>
+                                <div className="absolute top-6 left-0 bg-white border border-gray-300 rounded-lg shadow-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity max-w-xs">
+                                  <div className="text-xs text-gray-700">{annotation.comment}</div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      
+                      {/* Selection highlight */}
+                      {selectedText && selectionRect && (
+                        <div
+                          className="absolute bg-blue-200 bg-opacity-50 border border-blue-400"
+                          style={{
+                            left: selectionRect.x + 'px',
+                            top: selectionRect.y + 'px',
+                            width: selectionRect.width + 'px',
+                            height: selectionRect.height + 'px',
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Selection controls */}
+                  {selectedText && annotationMode !== 'none' && (
+                    <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3">
+                      <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                        Selected: "{selectedText.substring(0, 50)}..."
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => addAnnotation(annotationMode)}
+                          className="px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
+                        >
+                          Add {annotationMode.charAt(0).toUpperCase() + annotationMode.slice(1)}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedText('')
+                            setSelectionRect(null)
+                            window.getSelection()?.removeAllRanges()
+                          }}
+                          className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Comment box */}
+                  {showCommentBox && (
+                    <div className="absolute top-2 left-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3">
+                      <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">Add Comment:</div>
+                      <textarea
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        className="w-64 h-20 p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="Enter your comment..."
+                      />
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={addCommentAnnotation}
+                          className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                        >
+                          Add Comment
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowCommentBox(false)
+                            setCommentText('')
+                            setCommentPosition(null)
+                          }}
+                          className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Pan indicator */}
+                  {isPanning && (
+                    <div className="absolute bottom-2 left-2 bg-black dark:bg-gray-800 bg-opacity-75 text-white dark:text-gray-200 px-2 py-1 rounded text-xs">
+                      Panning... (Click and drag)
+                    </div>
+                  )}
+                  
+                  {/* Drawing indicator */}
+                  {isAnnotating && annotationMode === 'drawing' && (
+                    <div className="absolute bottom-2 right-2 bg-black dark:bg-gray-800 bg-opacity-75 text-white dark:text-gray-200 px-2 py-1 rounded text-xs">
+                      Drawing Mode - Click and drag to draw
+                    </div>
+                  )}
             </div>
           </div>
         ) : (
-          <div className="border border-gray-200 shadow-sm bg-white p-6 min-h-[600px]">
-            <div className="mb-4 text-sm text-gray-600">
-              {pdfDocument ? `Page ${currentPage} of ${totalPages}` : 'PDF View'} • {keywords.length} keywords detected
+              <div className="flex items-center justify-center h-[600px] text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+                  <p>No PDF loaded</p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="border border-gray-200 dark:border-gray-600 shadow-sm bg-white dark:bg-gray-800 p-6 min-h-[600px]">
+            <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              Text View • {keywords.length} keywords detected
             </div>
             <div
-              className="prose prose-sm max-w-none text-gray-800 leading-relaxed font-serif"
+              className="prose prose-sm max-w-none text-gray-800 dark:text-gray-200 leading-relaxed font-serif"
               onMouseUp={handleTextSelection}
               onMouseOver={handleKeywordHover}
               onMouseLeave={handleMouseLeave}
               dangerouslySetInnerHTML={{
-                __html: highlightKeywords((extractedText.split('\n\n')[currentPage - 1] || extractedText).replace(/\n/g, '<br>'))
+                __html: highlightKeywords(extractedText.replace(/\n/g, '<br>'))
               }}
             />
           </div>
@@ -667,6 +996,7 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
                 📍 Selected from PDF
               </div>
             )}
+            {/* Annotation button moved to Summary Panel */}
             <button
               onClick={() => setShowTextView(!showTextView)}
               className="group p-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md"
@@ -694,12 +1024,12 @@ export default function PDFDisplay({ file, extractedText, keywords }: PDFDisplay
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
             </div>
 
-            {searchTerm && (
+              {searchTerm && (
               <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <div className="flex items-center text-sm text-blue-700 dark:text-blue-300">
                   <Search className="h-4 w-4 mr-2" />
                   <span className="font-medium">Filtered by: "{searchTerm}"</span>
-                </div>
+            </div>
               </div>
             )}
 

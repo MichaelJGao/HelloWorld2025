@@ -2,12 +2,14 @@
 
 import React, { useState } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye, MessageCircle } from 'lucide-react'
+import { Upload, FileText, Loader2, AlertCircle, BookOpen, Eye, MessageCircle, Edit3, Brain } from 'lucide-react'
 import PDFDisplay from '@/components/PDFDisplay'
 import SummaryPanel from '@/components/SummaryPanel'
 import LandingPage from '@/components/LandingPage'
 import ThemeToggle from '@/components/ThemeToggle'
 import ChatBot from '@/components/ChatBot'
+import SimplePDFEditor from '@/components/SimplePDFEditor'
+import ConceptMap from '@/components/ConceptMap'
 import { extractTextFromPDF } from '@/lib/pdfProcessor'
 import { detectKeywords } from '@/lib/keywordDetector'
 
@@ -17,9 +19,10 @@ export default function Home() {
   const [keywords, setKeywords] = useState<Array<{word: string, definition: string, context: string}>>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string>('')
-  const [activeTab, setActiveTab] = useState<'viewer' | 'summary' | 'chat'>('viewer')
+  const [activeTab, setActiveTab] = useState<'viewer' | 'summary' | 'chat' | 'concept-map'>('viewer')
   const [showLandingPage, setShowLandingPage] = useState(true)
   const [showChatBot, setShowChatBot] = useState(false)
+  const [isSimplePDFEditing, setIsSimplePDFEditing] = useState(false)
 
   const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -277,6 +280,19 @@ export default function Home() {
                     </div>
                   </div>
                   
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setIsSimplePDFEditing(true)}
+                      className="group px-4 py-2 text-sm bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:from-purple-200 hover:to-pink-200 dark:hover:from-purple-800/40 dark:hover:to-pink-800/40 transition-all duration-300 transform hover:scale-105 font-medium"
+                      title="Open PDF in Full-Screen Viewer"
+                    >
+                      <span className="flex items-center">
+                        <Eye className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                        PDF Viewer
+                      </span>
+                    </button>
+                  </div>
+                  
                   {/* Enhanced Tab Navigation */}
                   <div className="flex items-center space-x-1 bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-sm rounded-xl p-1.5">
                     <button
@@ -312,6 +328,17 @@ export default function Home() {
                       <MessageCircle className="h-4 w-4 mr-1" />
                       Chat
                     </button>
+                    <button
+                      onClick={() => setActiveTab('concept-map')}
+                      className={`flex items-center px-3 py-1.5 text-sm rounded-md transition-colors ${
+                        activeTab === 'concept-map'
+                          ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Brain className="h-4 w-4 mr-1" />
+                      Concept Map
+                    </button>
                   </div>
                 </div>
                 
@@ -334,6 +361,12 @@ export default function Home() {
                       fileName={pdfFile.name}
                     />
                   </>
+                ) : activeTab === 'concept-map' ? (
+                  <ConceptMap
+                    extractedText={extractedText}
+                    keywords={keywords}
+                    fileName={pdfFile.name}
+                  />
                 ) : (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
                     <div className="text-center py-12">
@@ -368,6 +401,16 @@ export default function Home() {
           fileName={pdfFile.name}
           isVisible={showChatBot}
           onToggle={() => setShowChatBot(!showChatBot)}
+        />
+      )}
+
+      {/* SimplePDF Editor Overlay */}
+      {pdfFile && (
+        <SimplePDFEditor
+          file={pdfFile}
+          fileName={pdfFile.name}
+          isOpen={isSimplePDFEditing}
+          onClose={() => setIsSimplePDFEditing(false)}
         />
       )}
     </main>

@@ -56,8 +56,8 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
       for (let i = 0; i < 30; i++) {
         newShapes.push({
           id: i,
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * window.innerHeight,
+          x: Math.random() * (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920),
+          y: Math.random() * (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080),
           z: Math.random() * 800 - 400,
           vx: (Math.random() - 0.5) * 0.3,
           vy: (Math.random() - 0.5) * 0.3,
@@ -121,13 +121,13 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
           }
 
           // Boundary checking with bounce
-          if (newX < 0 || newX > window.innerWidth) {
+          if (newX < 0 || newX > (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920)) {
             shape.vx *= -0.8
-            newX = Math.max(0, Math.min(window.innerWidth, newX))
+            newX = Math.max(0, Math.min((typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920), newX))
           }
-          if (newY < 0 || newY > window.innerHeight) {
+          if (newY < 0 || newY > (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080)) {
             shape.vy *= -0.8
-            newY = Math.max(0, Math.min(window.innerHeight, newY))
+            newY = Math.max(0, Math.min((typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080), newY))
           }
           if (newZ < -400 || newZ > 400) {
             shape.vz *= -0.8
@@ -466,7 +466,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
               <div 
                 className="inline-flex items-center px-6 py-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-full border border-blue-200 dark:border-gray-600 mb-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 style={{
-                  transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.02}px, ${(mousePosition.y - window.innerHeight / 2) * 0.02}px) scale(${isHovering ? 1.05 : 1})`
+                  transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920) / 2) * 0.02}px, ${(mousePosition.y - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080) / 2) * 0.02}px) scale(${isHovering ? 1.05 : 1})`
                 }}
               >
                 <Sparkles className="w-5 h-5 text-yellow-500 mr-2 animate-pulse" />
@@ -476,7 +476,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
               <h1 
                 className="text-5xl md:text-7xl font-bold mb-6"
                 style={{
-                  transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.01}px, ${(mousePosition.y - window.innerHeight / 2) * 0.01}px)`
+                  transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920) / 2) * 0.01}px, ${(mousePosition.y - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080) / 2) * 0.01}px)`
                 }}
               >
                 <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-gradient">
@@ -489,7 +489,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
               <p 
                 className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed"
                 style={{
-                  transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.005}px, ${(mousePosition.y - window.innerHeight / 2) * 0.005}px)`
+                  transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920) / 2) * 0.005}px, ${(mousePosition.y - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080) / 2) * 0.005}px)`
                 }}
               >
                 Transform your research workflow with AI-powered keyword detection, 
@@ -500,14 +500,14 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
               <div 
                 className="flex flex-col sm:flex-row gap-4 justify-center items-center"
                 style={{
-                  transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.008}px, ${(mousePosition.y - window.innerHeight / 2) * 0.008}px)`
+                  transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920) / 2) * 0.008}px, ${(mousePosition.y - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080) / 2) * 0.008}px)`
                 }}
               >
                 <button
                   onClick={onGetStarted}
                   className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full text-lg font-semibold hover:shadow-2xl transition-all duration-300 transform hover:scale-105 flex items-center relative overflow-hidden"
                   style={{
-                    transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.01}px, ${(mousePosition.y - window.innerHeight / 2) * 0.01}px) scale(${isHovering ? 1.05 : 1})`
+                    transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920) / 2) * 0.01}px, ${(mousePosition.y - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080) / 2) * 0.01}px) scale(${isHovering ? 1.05 : 1})`
                   }}
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
@@ -520,7 +520,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
                 <button 
                   className="group px-8 py-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md text-gray-700 dark:text-gray-300 rounded-full text-lg font-semibold border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300 flex items-center hover:scale-105"
                   style={{
-                    transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.01}px, ${(mousePosition.y - window.innerHeight / 2) * 0.01}px) scale(${isHovering ? 1.05 : 1})`
+                    transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920) / 2) * 0.01}px, ${(mousePosition.y - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080) / 2) * 0.01}px) scale(${isHovering ? 1.05 : 1})`
                   }}
                 >
                   <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
@@ -535,31 +535,31 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         <div 
           className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20 animate-pulse transition-all duration-500"
           style={{
-            transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.03}px, ${(mousePosition.y - window.innerHeight / 2) * 0.03}px) scale(${isHovering ? 1.2 : 1})`
+            transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920) / 2) * 0.03}px, ${(mousePosition.y - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080) / 2) * 0.03}px) scale(${isHovering ? 1.2 : 1})`
           }}
         ></div>
         <div 
           className="absolute top-40 right-20 w-16 h-16 bg-gradient-to-r from-pink-400 to-red-400 rounded-full opacity-20 animate-bounce transition-all duration-500"
           style={{
-            transform: `translate(${(mousePosition.x - window.innerWidth / 2) * -0.02}px, ${(mousePosition.y - window.innerHeight / 2) * -0.02}px) scale(${isHovering ? 1.3 : 1})`
+            transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920) / 2) * -0.02}px, ${(mousePosition.y - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080) / 2) * -0.02}px) scale(${isHovering ? 1.3 : 1})`
           }}
         ></div>
         <div 
           className="absolute bottom-20 left-1/4 w-12 h-12 bg-gradient-to-r from-green-400 to-blue-400 rounded-full opacity-20 animate-ping transition-all duration-500"
           style={{
-            transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.04}px, ${(mousePosition.y - window.innerHeight / 2) * 0.04}px) scale(${isHovering ? 1.1 : 1})`
+            transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerWidth : 1920) : 1920) / 2) * 0.04}px, ${(mousePosition.y - (typeof window !== 'undefined' ? (typeof window !== 'undefined' ? window.innerHeight : 1080) : 1080) / 2) * 0.04}px) scale(${isHovering ? 1.1 : 1})`
           }}
         ></div>
         <div 
           className="absolute top-60 left-1/3 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full opacity-30 animate-pulse delay-1000 transition-all duration-500"
           style={{
-            transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.05}px, ${(mousePosition.y - window.innerHeight / 2) * 0.05}px) scale(${isHovering ? 1.4 : 1})`
+            transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * 0.05}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * 0.05}px) scale(${isHovering ? 1.4 : 1})`
           }}
         ></div>
         <div 
           className="absolute bottom-40 right-1/3 w-14 h-14 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-25 animate-bounce delay-500 transition-all duration-500"
           style={{
-            transform: `translate(${(mousePosition.x - window.innerWidth / 2) * -0.03}px, ${(mousePosition.y - window.innerHeight / 2) * -0.03}px) scale(${isHovering ? 1.2 : 1})`
+            transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * -0.03}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * -0.03}px) scale(${isHovering ? 1.2 : 1})`
           }}
         ></div>
         
@@ -568,13 +568,13 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
           <div 
             className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-200/10 dark:bg-blue-400/5 rounded-full blur-3xl animate-pulse transition-all duration-1000"
             style={{
-              transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.01}px, ${(mousePosition.y - window.innerHeight / 2) * 0.01}px) scale(${isHovering ? 1.1 : 1})`
+              transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * 0.01}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * 0.01}px) scale(${isHovering ? 1.1 : 1})`
             }}
           ></div>
           <div 
             className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-200/10 dark:bg-purple-400/5 rounded-full blur-3xl animate-pulse delay-1000 transition-all duration-1000"
             style={{
-              transform: `translate(${(mousePosition.x - window.innerWidth / 2) * -0.01}px, ${(mousePosition.y - window.innerHeight / 2) * -0.01}px) scale(${isHovering ? 1.1 : 1})`
+              transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * -0.01}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * -0.01}px) scale(${isHovering ? 1.1 : 1})`
             }}
           ></div>
         </div>
@@ -587,7 +587,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             <h2 
               className="text-4xl font-bold text-gray-900 dark:text-white mb-4"
               style={{
-                transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.005}px, ${(mousePosition.y - window.innerHeight / 2) * 0.005}px)`
+                transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * 0.005}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * 0.005}px)`
               }}
             >
               Powerful Features
@@ -595,7 +595,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             <p 
               className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
               style={{
-                transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.003}px, ${(mousePosition.y - window.innerHeight / 2) * 0.003}px)`
+                transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * 0.003}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * 0.003}px)`
               }}
             >
               Everything you need to analyze and understand your documents
@@ -606,7 +606,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             <div 
               className="group text-center p-8 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 hover:scale-105 border border-gray-200/50 dark:border-gray-700/50"
               style={{
-                transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.01}px, ${(mousePosition.y - window.innerHeight / 2) * 0.01}px) scale(${isHovering ? 1.02 : 1})`
+                transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * 0.01}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * 0.01}px) scale(${isHovering ? 1.02 : 1})`
               }}
             >
               <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -622,7 +622,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             <div 
               className="group text-center p-8 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 hover:scale-105 border border-gray-200/50 dark:border-gray-700/50"
               style={{
-                transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.008}px, ${(mousePosition.y - window.innerHeight / 2) * 0.008}px) scale(${isHovering ? 1.02 : 1})`
+                transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * 0.008}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * 0.008}px) scale(${isHovering ? 1.02 : 1})`
               }}
             >
               <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -638,7 +638,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             <div 
               className="group text-center p-8 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 hover:scale-105 border border-gray-200/50 dark:border-gray-700/50"
               style={{
-                transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.006}px, ${(mousePosition.y - window.innerHeight / 2) * 0.006}px) scale(${isHovering ? 1.02 : 1})`
+                transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * 0.006}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * 0.006}px) scale(${isHovering ? 1.02 : 1})`
               }}
             >
               <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -657,13 +657,13 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         <div 
           className="absolute top-10 left-10 w-32 h-32 bg-blue-200/20 dark:bg-blue-400/10 rounded-full blur-2xl animate-pulse transition-all duration-1000"
           style={{
-            transform: `translate(${(mousePosition.x - window.innerWidth / 2) * 0.02}px, ${(mousePosition.y - window.innerHeight / 2) * 0.02}px) scale(${isHovering ? 1.2 : 1})`
+            transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * 0.02}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * 0.02}px) scale(${isHovering ? 1.2 : 1})`
           }}
         ></div>
         <div 
           className="absolute bottom-10 right-10 w-40 h-40 bg-purple-200/20 dark:bg-purple-400/10 rounded-full blur-2xl animate-pulse delay-1000 transition-all duration-1000"
           style={{
-            transform: `translate(${(mousePosition.x - window.innerWidth / 2) * -0.02}px, ${(mousePosition.y - window.innerHeight / 2) * -0.02}px) scale(${isHovering ? 1.2 : 1})`
+            transform: `translate(${(mousePosition.x - (typeof window !== 'undefined' ? window.innerWidth : 1920) / 2) * -0.02}px, ${(mousePosition.y - (typeof window !== 'undefined' ? window.innerHeight : 1080) / 2) * -0.02}px) scale(${isHovering ? 1.2 : 1})`
           }}
         ></div>
       </section>
